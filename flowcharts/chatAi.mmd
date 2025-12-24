@@ -1,0 +1,28 @@
+flowchart TD
+    A[User opens AI Chat] --> B[Create / Load Chat Session]
+
+    B --> C[User selects Team]
+
+    C --> D[User sends message]
+
+    D --> E[Backend validates authentication]
+    E -->|Invalid| E1[Reject request]
+    E -->|Valid| F[Validate user belongs to team]
+
+    F -->|Invalid| F1[Access denied]
+    F -->|Valid| G[Store user message in DB]
+
+    G --> H[Retrieve chat history]
+    H --> I["Retrieve relevant documents<br/>(team + org scoped)"]
+
+    I --> J["Send context + docs to AI (RAG)"]
+
+    J --> K[AI generates response]
+
+    K --> L["Store AI message in DB<br/>(with citations & metadata)"]
+
+    L --> M[Supabase Realtime broadcasts update]
+
+    M --> N[Frontend receives message via WebSocket]
+
+    N --> O[Render AI response in chat UI]

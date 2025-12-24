@@ -1,0 +1,12 @@
+flowchart TD
+    A[User submits Login Form] --> B[Validate Credentials]
+
+    B -->|Invalid| C[Show Login Error]
+
+    B -->|Valid| D[Authentication Successful]
+
+    D --> E{Check User Role}
+
+    E -->|Admin| F[Redirect to Admin Dashboard]
+
+    E -->|User| G[Redirect to User Dashboard]

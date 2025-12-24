@@ -1,0 +1,39 @@
+flowchart TD
+    %% Entry
+    A[Admin Dashboard] --> B{Select Action}
+
+    %% Create Team Flow
+    B -->|Create Team| C["Click Create Team"]
+    C --> D[Fill Team Form]
+    D --> E[Submit Team Data]
+    E --> F[Backend API: Create Team]
+    F --> G{Auth & Admin Role Valid?}
+    G -->|No| H[Reject Request]
+    G -->|Yes| I[Create Team in Database]
+    I --> J[Return Success Response]
+    J --> A
+
+    %% Upload Document Flow
+    B -->|Upload Documents| K[Select Team]
+    K --> L[Select Files]
+    L --> M[Upload to Backend]
+    M --> N[Backend API: Upload Documents]
+    N --> O{Auth & Team Permission Valid?}
+    O -->|No| H
+    O -->|Yes| P[Store Files in Team Storage]
+    P --> Q[Index & Save Metadata in DB]
+    Q --> R[Return Upload Success]
+    R --> A
+
+    %% Delete Document Flow
+    B -->|Delete Documents| S[Select Team]
+    S --> T[Select Documents]
+    T --> U[Click Delete]
+    U --> V[Backend API: Delete Documents]
+    V --> W{Auth & Team Permission Valid?}
+    W -->|No| H
+    W -->|Yes| X{Document Exists in Team?}
+    X -->|No| Y[Return Not Found Error]
+    X -->|Yes| Z[Delete File & Metadata]
+    Z --> AA[Return Delete Success]
+    AA --> A

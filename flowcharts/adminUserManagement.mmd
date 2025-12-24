@@ -1,0 +1,37 @@
+flowchart TD
+    A["Admin (Logged In)"] -->|Click User Management| B["Admin Dashboard"]
+
+    %% ===== Create User Flow =====
+    B -->|Create User| C["Fill User Form<br/>(name, email, role, team)"]
+    C -->|Submit| D["Frontend API Call"]
+
+    %% ===== Modify User Flow =====
+    B -->|Modify User| E["Select User"]
+    E -->|Select Team| F["Update User Team"]
+    F -->|Submit| D
+
+    %% ===== Delete User Flow =====
+    B -->|Delete User| G["Select User(s)"]
+    G -->|Confirm Delete| D
+
+    %% ===== Backend Security Layer =====
+    D --> H["Backend API"]
+    H -->|Verify JWT Token| I{"Token Valid?"}
+    I -->|No| J["Reject Request<br/>(401 Unauthorized)"]
+    I -->|Yes| K["Fetch User Role from DB"]
+
+    K --> L{"Is Admin?"}
+    L -->|No| M["Reject Request<br/>(403 Forbidden)"]
+    L -->|Yes| N["Perform Admin Action"]
+
+    %% ===== Supabase Operations =====
+    N -->|Create| O["Create Auth User<br/>Insert Profile<br/>Assign Team"]
+    N -->|Modify| P["Update User-Team Mapping"]
+    N -->|Delete| Q["Delete Auth User<br/>Delete Profile<br/>Remove Relations"]
+
+    %% ===== Success =====
+    O --> R["Success Response"]
+    P --> R
+    Q --> R
+
+    R --> S["Update Admin Dashboard UI"]

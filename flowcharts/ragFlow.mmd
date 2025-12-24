@@ -1,0 +1,24 @@
+flowchart TD
+    A[User opens AI Chat] --> B[Verify JWT Authentication]
+
+    B -->|Invalid| C[Reject Request]
+
+    B -->|Valid| D[Fetch User's Allowed Teams]
+
+    D --> E[Display Team Selector]
+
+    E --> F[User selects one or more teams]
+
+    F --> G{Selected teams ⊆ Allowed teams?}
+
+    G -->|No| H[Reject: Unauthorized Scope]
+
+    G -->|Yes| I[Build Vector Retrieval Scope]
+
+    I --> J[Retrieve Document Chunks<br/>Filtered by team_id]
+
+    J --> K[Generate AI Response<br/>Using RAG]
+
+    K --> L[Store Chat & Response]
+
+    L --> M[Return AI Answer to User]
