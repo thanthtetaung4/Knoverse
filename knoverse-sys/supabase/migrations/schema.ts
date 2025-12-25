@@ -1,4 +1,4 @@
-import { pgTable, foreignKey, uuid, text, timestamp, jsonb, real, integer, unique, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, uuid, text, timestamp, jsonb, real, integer, unique, pgPolicy, primaryKey } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -45,13 +45,24 @@ export const chatMessages = pgTable("chat_messages", {
 		}).onDelete("set null"),
 ]);
 
-export const teams = pgTable("teams", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	name: text().notNull(),
-	description: text(),
+export const users = pgTable("users", {
+	id: uuid().primaryKey().notNull(),
+	email: text().notNull(),
+	fullName: text("full_name"),
+	role: text().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
-	unique("teams_name_unique").on(table.name),
+	foreignKey({
+			columns: [table.id],
+			foreignColumns: [table.id],
+			name: "users_id_fkey"
+		}).onDelete("cascade"),
+	unique("users_email_unique").on(table.email),
+	pgPolicy("admins can read all users", { as: "permissive", for: "select", to: ["public"], using: sql`(EXISTS ( SELECT 1
+   FROM users u
+  WHERE ((u.id = auth.uid()) AND (u.role = 'admin'::text))))` }),
+	pgPolicy("users can read own profile", { as: "permissive", for: "select", to: ["public"] }),
+	pgPolicy("users can update own profile", { as: "permissive", for: "update", to: ["public"] }),
 ]);
 
 export const analyticsEvents = pgTable("analytics_events", {
@@ -73,14 +84,13 @@ export const analyticsEvents = pgTable("analytics_events", {
 		}).onDelete("set null"),
 ]);
 
-export const users = pgTable("users", {
-	id: uuid().primaryKey().notNull(),
-	email: text().notNull(),
-	fullName: text("full_name"),
-	role: text().notNull(),
+export const teams = pgTable("teams", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	name: text().notNull(),
+	description: text(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
-	unique("users_email_unique").on(table.email),
+	unique("teams_name_unique").on(table.name),
 ]);
 
 export const teamMembers = pgTable("team_members", {

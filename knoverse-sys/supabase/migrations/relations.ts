@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { teams, chatSessions, users, chatMessages, analyticsEvents, teamMembers } from "./schema";
+import { teams, chatSessions, users, chatMessages, usersInAuth, analyticsEvents, teamMembers } from "./schema";
 
 export const chatSessionsRelations = relations(chatSessions, ({one, many}) => ({
 	team: one(teams, {
@@ -19,9 +19,13 @@ export const teamsRelations = relations(teams, ({many}) => ({
 	teamMembers: many(teamMembers),
 }));
 
-export const usersRelations = relations(users, ({many}) => ({
+export const usersRelations = relations(users, ({one, many}) => ({
 	chatSessions: many(chatSessions),
 	chatMessages: many(chatMessages),
+	usersInAuth: one(usersInAuth, {
+		fields: [users.id],
+		references: [usersInAuth.id]
+	}),
 	analyticsEvents: many(analyticsEvents),
 	teamMembers: many(teamMembers),
 }));
@@ -35,6 +39,10 @@ export const chatMessagesRelations = relations(chatMessages, ({one}) => ({
 		fields: [chatMessages.senderId],
 		references: [users.id]
 	}),
+}));
+
+export const usersInAuthRelations = relations(usersInAuth, ({many}) => ({
+	users: many(users),
 }));
 
 export const analyticsEventsRelations = relations(analyticsEvents, ({one}) => ({
