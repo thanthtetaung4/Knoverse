@@ -1,0 +1,16 @@
+# Core dependencies
+python-dotenv>=1.0.0
+
+# LangChain and integrations
+langchain>=0.1.0
+langchain-community>=0.0.26
+langchain-pinecone>=0.2.0
+
+# PDF processing
+pypdf>=4.0.1
+
+# Pinecone
+pinecone-client>=3.0.0
+
+# Ollama integration
+requests>=2.31.0

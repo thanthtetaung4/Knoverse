@@ -1,0 +1,31 @@
+flowchart TD
+    U[User asks question<br/>Frontend UI] -->|JWT + message| N[Next.js Backend API]
+
+    %% Auth & Validation
+    N --> A{Validate JWT<br/>Supabase Auth}
+    A -->|Invalid| X[Reject Request]
+    A -->|Valid| B[Extract user_id & org_id]
+
+    %% Authorization
+    B --> C{User belongs to team?}
+    C -->|No| X
+    C -->|Yes| D{Chat belongs to user?}
+
+    D -->|No| X
+    D -->|Yes| E[Insert USER message<br/>messages table]
+
+    %% AI Processing
+    E --> F["Call AI Backend<br/>(Flask)"]
+    F --> G[Embed user query]
+    G --> H[Query Pinecone<br/>filter: org_id + team_id]
+    H --> I[Retrieve relevant chunks]
+    I --> J[Build RAG prompt]
+    J --> K[LLM generates response]
+
+    %% Persist AI Message
+    K --> L[Return AI response]
+    L --> M[Insert AI message<br/>messages table]
+
+    %% Realtime Update
+    M --> R[Supabase Realtime<br/>WebSocket]
+    R --> UI[Frontend updates chat UI]
