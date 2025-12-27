@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import { LogoutButton } from '@/components/logout-button'
 import { createClient } from '@/lib/supabase/client'
+import { log } from 'console'
 
 export default function ProtectedPage() {
   const [email, setEmail] = useState<string | null>(null)
@@ -52,6 +53,7 @@ export default function ProtectedPage() {
         }
       })
 
+      console.log(session.access_token);
       const data = await response.json()
 
       // Use Supabase client for frontend queries (Drizzle is server-only)

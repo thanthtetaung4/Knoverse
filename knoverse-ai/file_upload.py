@@ -8,9 +8,10 @@ This script demonstrates the full workflow of:
 """
 
 import os
-from pathlib import Path
+import string
 from dotenv import load_dotenv
 from typing import List
+import sys
 
 # LangChain imports
 from langchain_community.document_loaders import PyPDFLoader
@@ -111,7 +112,7 @@ def upload_to_pinecone(chunks: List, embeddings, index_name: str):
     return vector_store
 
 
-def main():
+def uploadFile(path: string):
     """Main workflow: Load PDF -> Create embeddings -> Upload to Pinecone."""
     try:
         # Validate configuration
@@ -126,7 +127,7 @@ def main():
         index_name = initialize_pinecone()
 
         # Step 2: Load and split PDF
-        chunks = load_and_split_pdf(PDF_PATH)
+        chunks = load_and_split_pdf(path)
 
         # Step 3: Create embeddings using Ollama
         embeddings = create_embeddings()
@@ -151,6 +152,5 @@ def main():
         print(f"\nError: {str(e)}")
         raise
 
-
 if __name__ == "__main__":
-    main()
+    uploadFile(sys.argv[1])

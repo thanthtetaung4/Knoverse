@@ -20,9 +20,29 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "nomic-embed-text")
 OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "llama3")  # For generation
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
+# Example placeholder chat history; swap for DB-backed history later
+DEFAULT_CHAT_HISTORY = [
+    {
+        "question": "What is this document about?",
+        "answer": "It summarizes the service terms and pricing tiers.",
+    },
+    {
+        "question": "Does it mention support hours?",
+        "answer": "Yes, standard support is 9am-5pm GMT on weekdays.",
+    },
+    {
+        "question": "Remember that we are opening the shop at next week Monday",
+        "answer": "Got it.",
+    }
+]
+
 # Custom prompt template for Q&A
-PROMPT_TEMPLATE = """Based on the following context from the document, answer the question. 
-If you don't know the answer, just say that you don't know.
+PROMPT_TEMPLATE = """You are a helpful assistant for Q&A over PDFs.
+You must use the context and recent chat history to answer.
+If you don't know the answer, say you don't know.
+
+Chat history (most recent first):
+{chat_history}
 
 Context:
 {context}
@@ -30,6 +50,19 @@ Context:
 Question: {question}
 
 Answer:"""
+
+
+def format_chat_history(chat_history):
+    """Format in-memory chat history for the prompt. Placeholder for DB later."""
+    if not chat_history:
+        return "(no prior messages)"
+    lines = []
+    for turn in reversed(chat_history[-10:]):  # limit to last 10 turns
+        user_msg = turn.get("question", "")
+        bot_msg = turn.get("answer", "")
+        lines.append(f"User: {user_msg}")
+        lines.append(f"Assistant: {bot_msg}")
+    return "\n".join(lines)
 
 
 def create_rag_chain():
@@ -47,6 +80,8 @@ def create_rag_chain():
         embedding=embeddings,
         namespace="pdf-documents"
     )
+    # try to get with metadata fileId: id
+    # update the pinecone as well to match the fileId
     print("✓")
     
     print(f"Initializing {OLLAMA_LLM_MODEL} LLM for generation...", end=" ", flush=True)
@@ -58,18 +93,22 @@ def create_rag_chain():
     print("✓")
     
     # Create retriever
-    retriever = vector_store.as_retriever(search_kwargs={"k": 3})
+    retriever = vector_store.as_retriever(search_kwargs={})
     
-    # Create prompt template
+    # Create prompt template with chat history
     prompt = PromptTemplate.from_template(PROMPT_TEMPLATE)
     
     # Format function for documents
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
     
-    # Create RAG chain
+    # Create RAG chain; input is a dict with question and chat_history
     rag_chain = (
-        {"context": retriever | format_docs, "question": lambda x: x}
+        {
+            "context": retriever | format_docs,
+            "question": lambda x: x["question"],
+            "chat_history": lambda x: format_chat_history(x["chat_history"]),
+        }
         | prompt
         | llm
         | StrOutputParser()
@@ -79,14 +118,17 @@ def create_rag_chain():
     return rag_chain, retriever
 
 
-def ask_question(rag_chain, retriever, question):
-    """Ask a question and get an answer with sources."""
+def ask_question(rag_chain, retriever, question, chat_history):
+    """Ask a question and get an answer with sources; persists to chat_history list."""
     print(f"\n📝 Question: {question}")
     print("⏳ Generating answer...\n")
     
     # Get answer
-    answer = rag_chain.invoke(question)
+    answer = rag_chain.invoke({"question": question, "chat_history": chat_history})
     print(f"💡 Answer:\n{answer}")
+
+    # Persist in-memory chat history (placeholder for DB persistence)
+    chat_history.append({"question": question, "answer": answer})
     
     # Get source documents
     docs = retriever.invoke(question)
@@ -105,6 +147,8 @@ def interactive_qa():
     print("="*60)
     
     rag_chain, retriever = create_rag_chain()
+    # Start with example history; replace with DB fetch later
+    chat_history = list(DEFAULT_CHAT_HISTORY)
     
     print("Tips:")
     print("- Ask natural language questions about the PDF")
@@ -132,7 +176,7 @@ def interactive_qa():
                 print()
                 continue
             
-            ask_question(rag_chain, retriever, question)
+            ask_question(rag_chain, retriever, question, chat_history)
             
         except KeyboardInterrupt:
             print("\n\nGoodbye!")
@@ -149,66 +193,11 @@ def batch_qa(questions):
     print("="*60)
     
     rag_chain, retriever = create_rag_chain()
+    # Shared placeholder history across batch
+    chat_history = list(DEFAULT_CHAT_HISTORY)
     
     for question in questions:
-        ask_question(rag_chain, retriever, question)
-        print("\n" + "="*60)
-
-
-def interactive_qa():
-    """Interactive Q&A session."""
-    print("="*60)
-    print("PDF Question Answering System")
-    print("="*60)
-    
-    rag_chain, retriever = create_rag_chain()
-    
-    print("Tips:")
-    print("- Ask natural language questions about the PDF")
-    print("- Type 'quit' or 'exit' to end")
-    print("- Type 'help' for examples\n")
-    
-    while True:
-        try:
-            question = input("❓ Ask a question: ").strip()
-            
-            if not question:
-                print("Please enter a question.")
-                continue
-            
-            if question.lower() in ['quit', 'exit']:
-                print("\nGoodbye!")
-                break
-            
-            if question.lower() == 'help':
-                print("\n📖 Example questions:")
-                print("  - What are the payment methods?")
-                print("  - What is the limitation of liability?")
-                print("  - How can I use this service?")
-                print("  - What are the terms and conditions?")
-                print()
-                continue
-            
-            ask_question(rag_chain, retriever, question)
-            
-        except KeyboardInterrupt:
-            print("\n\nGoodbye!")
-            break
-        except Exception as e:
-            print(f"Error: {str(e)}")
-            continue
-
-
-def batch_qa(questions):
-    """Answer multiple questions."""
-    print("="*60)
-    print("PDF Question Answering System - Batch Mode")
-    print("="*60)
-    
-    rag_chain, retriever = create_rag_chain()
-    
-    for question in questions:
-        ask_question(rag_chain, retriever, question)
+        ask_question(rag_chain, retriever, question, chat_history)
         print("\n" + "="*60)
 
 
