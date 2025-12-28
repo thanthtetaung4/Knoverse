@@ -1,11 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
+import type { User } from '@supabase/supabase-js'
 
 export type AuthResult = {
   success: true
-  user: {
-    id: string
-    email: string
-  }
+  user: User
 } | {
   success: false
   error: string
@@ -36,9 +34,6 @@ export async function checkAuth(accessToken: string): Promise<AuthResult> {
 
   return {
     success: true,
-    user: {
-      id: data.user.id,
-      email: data.user.email!,
-    },
+    user: data.user
   }
 }

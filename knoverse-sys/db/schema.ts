@@ -28,6 +28,8 @@ export const users = pgTable('users', {
   }).defaultNow(),
 });
 
+export type UserDB = typeof users.$inferSelect;
+
 /* =====================================================
    TEAMS
    ===================================================== */

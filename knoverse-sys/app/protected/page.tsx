@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import { LogoutButton } from '@/components/logout-button'
 import { createClient } from '@/lib/supabase/client'
-import { log } from 'console'
+import type { UserDB } from '@/db/schema'
 
 export default function ProtectedPage() {
   const [email, setEmail] = useState<string | null>(null)
@@ -54,16 +54,24 @@ export default function ProtectedPage() {
       })
 
       console.log(session.access_token);
+      console.log(session.user.role)
       const data = await response.json()
 
-      // Use Supabase client for frontend queries (Drizzle is server-only)
-      const { data: userData } = await supabase
-        .from('user_table')
-        .select()
-        .eq('email', 'kototegyiwithydnt@gmail.com')
-        .single()
+      console.log('API response:', data)
+      console.log('API response:', data.userId)
 
-      console.log('User from DB:', userData)
+      // Use Supabase client for frontend queries (Drizzle is server-only)
+      const userData = await fetch('/api/get/getUser', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      }).then(res => res.json()).catch(err => {
+        console.error('Error fetching user data:', err);
+        return { user: null };
+      });
+
+      const user: UserDB = userData.user || null;
+      console.log('User from DB:', user)
 
       if (!response.ok) {
         setApiError(data.error || 'API request failed')
