@@ -16,8 +16,11 @@ response = supabase.table("teams").select("*").execute()
 
 print(response)
 
-try:
-	response = supabase.storage.from_("files").download("sample-terms-conditions-agreement.pdf")
-except Exception as e:
-	print(e)
-print(response)
+response = supabase.storage.from_("files").download("sample-terms-conditions-agreement.pdf")
+open("downloaded-file.pdf", "wb").write(response)
+
+# try:
+# 	response = supabase.storage.from_("files").download("sample-terms-conditions-agreement.pdf")
+# except Exception as e:
+# 	print(e)
+# print(response)

@@ -52,11 +52,33 @@ export async function POST(request: NextRequest) {
 	// Upload file to Supabase Storage
 	try {
 		const uploadResponse = await supabaseUploadFile(teamId, file);
-		filePath = uploadResponse.fullPath;
+		filePath = uploadResponse.path
+		console.log('File uploaded to Supabase at path:', filePath);
 	} catch (error: unknown) {
 		return NextResponse.json({ error: 'File upload failed', details: error }, { status: 500 });
-	} finally {
+	}
 
+	try {
+		// Call Python server to vectorize the file
+		const pythonServerBase = process.env.PY_SERVER_URL ?? 'http://localhost:8000';
+		const pythonEndpoint = `${pythonServerBase.replace(/\/$/, '')}/uploadFile`;
+
+		const pythonResp = await fetch(pythonEndpoint, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ fileName: filePath }),
+		});
+
+		if (!pythonResp.ok) {
+			const txt = await pythonResp.text().catch(() => '');
+			return NextResponse.json({ error: 'Python server error', details: txt }, { status: 500 });
+		}
+
+		const pythonJson = await pythonResp.json().catch(() => ({}));
+		console.log('Python server response:', pythonJson);
+	} catch (error: unknown) {
+		console.error('Error calling python server:', error);
+		return NextResponse.json({ error: 'Failed to call python server', details: String(error) }, { status: 500 });
 	}
 	console.log('file: ', file.name, ',', file.type, 'teamId: ', teamId);
 

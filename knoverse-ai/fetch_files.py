@@ -31,13 +31,13 @@ try:
 	cursor = connection.cursor()
 	
 	# Example query
-	cursor.execute("SELECT * from storage.objects inner join team_files on storage.objects.id = team_files.object_id;")
+	cursor.execute("SELECT * from team_files;")
 	result = cursor.fetchone()
 	print("Files:", result)
 	
-	cursor.execute("SELECT * from storage.bucket")
-	result = cursor.fetchone()
-	print("Storage: ", result)
+	# cursor.execute("SELECT * from storage.bucket")
+	# result = cursor.fetchone()
+	# print("Storage: ", result)
 	
 
 	# Close the cursor and connection
