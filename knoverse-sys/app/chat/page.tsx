@@ -1,10 +1,13 @@
+'use client';
 import { useState } from 'react';
 
 export default function ChatPage() {
 	const [text, setText] = useState<string>("");
+	const [loading, setLoading] = useState<boolean>(false);
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		setLoading(true);
 		const formData = new FormData(e.currentTarget);
 		const message = formData.get('message');
 
@@ -12,7 +15,7 @@ export default function ChatPage() {
 			const response = await fetch('/api/chat/sendMessage', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ message }),
+				body: JSON.stringify({ message, sessionId: "e2b07688-2243-4069-8dce-69cf45a26905" }),
 			});
 
 			if (!response.ok) {
@@ -26,6 +29,7 @@ export default function ChatPage() {
 					: "An unknown error occurred while sending the message."
 			);
 		}
+		setLoading(false);
 	}
 	return (<>
 		<form onSubmit={handleSubmit}>
@@ -37,7 +41,7 @@ export default function ChatPage() {
 				onChange={(e) => setText(e.target.value)}
 				placeholder="Type your message here"
 			/>
-			<button type="submit">Send</button>
+			<button type="submit" disabled={loading}>{loading ? "Sending..." : "Send"}</button>
 		</form>
 		</>)
 }

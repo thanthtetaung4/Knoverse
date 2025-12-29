@@ -1,15 +1,15 @@
 import { NextResponse, NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
-	const { message } = await request.json();
-
+	const { message, sessionId } = await request.json();
+	console.log('Received message:', message, 'for sessionId:', sessionId);
 	try {
 		const pythonServerBase = process.env.PY_SERVER_URL ?? '';
-		const pythonEndpoint = `${pythonServerBase.replace(/\/$/, '')}/uploadFile`;
+		const pythonEndpoint = `${pythonServerBase.replace(/\/$/, '')}/chat`;
 		const pythonResp = await fetch(pythonEndpoint, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ message }),
+			body: JSON.stringify({ message, sessionId }),
 		});
 		console.log('Python server response status:', pythonResp.status);
 	} catch (error: unknown) {

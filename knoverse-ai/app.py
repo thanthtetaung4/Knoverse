@@ -58,7 +58,7 @@ def upload_file_endpoint():
 @app.route('/chat', methods=['POST'])
 def char_endpoint():
     user_message: str = request.json.get('message')
-    chat_session: str = request.json.get('session')
+    chat_session: str = request.json.get('sessionId')
     try:
         response_message = chat.chat(user_message, chat_session)
         print(f"Chat response: {response_message}")
