@@ -32,7 +32,6 @@ export default async function RootLayout({
   const {
     data: { session },
   } = await supabase.auth.getSession()
-
   const user = session?.user ?? null
 
   return (

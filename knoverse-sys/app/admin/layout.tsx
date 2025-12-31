@@ -9,7 +9,7 @@ import { LogoutButton } from '@/components/logout-button'
 
 type ApiUserResponse = { user: UserDB | null };
 
-async function fetchUserDataFromApi(accessToken: string): Promise<ApiUserResponse | null> {
+export async function fetchUserDataFromApi(accessToken: string): Promise<ApiUserResponse | null> {
 	try {
 		const res = await fetch("/api/get/getUser", {
 			headers: { Authorization: `Bearer ${accessToken}` },
