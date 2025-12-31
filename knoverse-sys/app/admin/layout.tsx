@@ -28,7 +28,7 @@ async function fetchUserDataFromApi(accessToken: string): Promise<ApiUserRespons
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-	const { user } = useUser();``
+	const { user } = useUser();
 	const router = useRouter();
 
 	// undefined = loading, null = fetched but no user, object = response
@@ -81,17 +81,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 	}
 
 	return (
-	<div className="flex min-h-screen">
-      <aside className="w-60 border-r p-4">
-        <h2 className="font-bold mb-4">Admin</h2>
+	<div className="flex min-h-screen flex-col md:flex-row">
+	  <aside className="w-full md:w-40 border-b md:border-r p-4">
+		<aside className="flex items-center gap-3 mb-4 md:mb-8">
+			<div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+	    	<h2 className="font-bold text-base md:text-lg">Admin</h2>
+		</aside>
 
-        <nav className="flex flex-col gap-2">
+		<nav className="flex gap-4 md:flex-col md:gap-6 overflow-x-auto md:overflow-x-visible">
           <a href="/admin" className="hover:underline">
             Dashboard
           </a>
+		  <a href="/admin/create-team" className="hover:underline">
+            Create Team
+          </a>
+		  <a href="/admin/manage-users" className="hover:underline">
+			Manage Users
+		  </a>
+		  <a href="/admin/reports" className="hover:underline">
+			Reports
+		  </a>
         </nav>
       </aside>
-      <main className="flex-1 p-6">{children}</main>
+	  <main className="flex-1 p-6">{children}</main>
 	  <div className="absolute top-4 right-4 flex items-center gap-2">
 		<ThemeToggle />
 		<LogoutButton />
