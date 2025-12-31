@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { UserDB } from "@/db/schema";
 import { LogoutButton } from '@/components/logout-button'
+import ThemeToggle from '@/components/theme-toggle'
 
 type ApiUserResponse = { user: UserDB | null };
 
@@ -27,7 +28,7 @@ async function fetchUserDataFromApi(accessToken: string): Promise<ApiUserRespons
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-	const { user } = useUser();
+	const { user } = useUser();``
 	const router = useRouter();
 
 	// undefined = loading, null = fetched but no user, object = response
@@ -80,21 +81,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 	}
 
 	return (
-		<div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-			<header style={{ padding: 16, borderBottom: "1px solid #eaeaea" }}>
-				<div style={{ maxWidth: 1200, margin: "0 auto", fontWeight: 600 }}>Admin</div>
-			</header>
+	<div className="flex min-h-screen">
+      <aside className="w-60 border-r p-4">
+        <h2 className="font-bold mb-4">Admin</h2>
 
-			<main style={{ flex: 1, maxWidth: 1200, margin: "24px auto", width: "100%" }}>
-				<nav>
-					<LogoutButton />
-				</nav>
-				{children}
-			</main>
-
-			<footer style={{ padding: 12, borderTop: "1px solid #eaeaea", textAlign: "center" }}>
-				© {new Date().getFullYear()} Knoverse
-			</footer>
-		</div>
-	);
+        <nav className="flex flex-col gap-2">
+          <a href="/admin" className="hover:underline">
+            Dashboard
+          </a>
+        </nav>
+      </aside>
+      <main className="flex-1 p-6">{children}</main>
+	  <div className="absolute top-4 right-4 flex items-center gap-2">
+		<ThemeToggle />
+		<LogoutButton />
+		</div>    
+	</div>
+  );
 }
