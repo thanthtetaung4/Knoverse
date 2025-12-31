@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { fetchUserDataFromApi } from '@/app/admin/layout'
+import { useUser, fetchUserDataFromApi } from '@/app/providers/UserProvider'
 
 export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   const [email, setEmail] = useState('')
@@ -23,6 +23,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const {setUser} = useUser();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,6 +39,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       if (error) throw error
       // Update this route to redirect to an authenticated route. The user already has an active session.
       const user = (await fetchUserDataFromApi(data.session.access_token))?.user ?? null
+      setUser(user);
       if (user && user.role === 'member')
         router.push('/')
       else if (user && user.role === 'admin')

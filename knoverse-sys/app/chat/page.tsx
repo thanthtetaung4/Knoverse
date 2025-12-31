@@ -1,10 +1,12 @@
 'use client';
 import { useState } from 'react';
+import { useUser } from '../providers/UserProvider';
 
 export default function ChatPage() {
 	const [text, setText] = useState<string>("");
 	const [loading, setLoading] = useState<boolean>(false);
-
+	// const {user} = useUser()
+	// console.log("user: ", user)
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setLoading(true);
