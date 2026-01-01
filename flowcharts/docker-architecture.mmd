@@ -1,0 +1,11 @@
+flowchart LR
+    subgraph Docker_Stack
+        frontend["Frontend\n(port 3000)"]
+        api["API\n(port 8000)"]
+        ollama["Ollama\n(port 11434)"]
+        ollama_data["Ollama Volume\n(persistent storage)"]
+    end
+
+    frontend -->|depends_on| api
+    api -->|depends_on| ollama
+    ollama -->|uses| ollama_data
