@@ -1,26 +1,33 @@
 import { checkAuth } from '@/lib/auth/checkAuth';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { teamFiles } from '@/supabase/migrations/schema';
 import { db } from '@/db';
-import { teamFiles } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
-async function supabaseUploadFile(teamId: string, file: File) {
+async function supabaseDeleteFile(fileId: string, filePath: string) {
 	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 	const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY!;
 	const supabase = createClient(supabaseUrl, supabaseKey);
 
+	console.log('Deleting file with fileId:', fileId);
+	const result = await db.delete(teamFiles).where(eq(teamFiles.objectId, fileId));
+	if (result.count === 0) {
+		throw new Error('No team file record found to delete');
+	}
+	console.log('Delete result:', result[0]);
+	console.log('Deleting file from Supabase with fileId:', filePath);
 	const { data, error } = await supabase
 		.storage
 		.from('files')
-		.upload(file.name, file);
-	// use this to create team file data?.id;
+		.remove([filePath]);
+	console.log('Supabase delete response data:', data);
+
 	if (error) {
+		console.log('File delete error from Supabase:', error);
 		throw error;
 	}
-	const result  = await db.insert(teamFiles).values({teamId: teamId, objectId: data.id});
-	if (!result) {
-		throw new Error('Failed to insert team file record');
-	}
+
 	return data;
 }
 
@@ -33,9 +40,10 @@ export async function POST(request: NextRequest) {
 	const formData = await request.formData();
 	const authHeader = request.headers.get('Authorization')
 	const accessToken = authHeader?.replace('Bearer ', '')
-	const file = formData.get('fileUpload') as File | null;
-	const teamId = formData.get('teamId') as string | null;
+	const fileId = formData.get('fileId') as string | null;
+	const filePath = formData.get('filePath') as string | null; // assuming filePath is same as fileId for deletion
 
+	console.log('Received fileId:', fileId);
 	if (!accessToken) {
 		return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 });
 	}
@@ -47,34 +55,28 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json({ error: authResult.error }, { status: 401 });
 	}
 
-	if (!file) {
-		return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-	}
-	if (!teamId) {
-		return NextResponse.json({ error: 'No teamId provided' }, { status: 400 });
+
+	if (!fileId) {
+		return NextResponse.json({ error: 'No fileId provided' }, { status: 400 });
 	}
 
-	let filePath = '';
-	let fileId = '';
 	// Upload file to Supabase Storage
 	try {
-		const uploadResponse = await supabaseUploadFile(teamId, file);
-		filePath = uploadResponse.path
-		fileId = uploadResponse.id;
-		console.log('File uploaded to Supabase at path:', filePath);
+		const deleteResponse = await supabaseDeleteFile(fileId, filePath!);
+		console.log('File deleted from Supabase at path:', filePath);
 	} catch (error: unknown) {
-		return NextResponse.json({ error: 'File upload failed', details: error }, { status: 500 });
+		return NextResponse.json({ error: 'File delete failed', details: error }, { status: 500 });
 	}
 
 	try {
 		// Call Python server to vectorize the file
 		const pythonServerBase = process.env.PY_SERVER_URL ?? 'http://localhost:8000';
-		const pythonEndpoint = `${pythonServerBase.replace(/\/$/, '')}/uploadFile`;
+		const pythonEndpoint = `${pythonServerBase.replace(/\/$/, '')}/deleteFile`;
 
 		const pythonResp = await fetch(pythonEndpoint, {
-			method: 'POST',
+			method: 'DELETE',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ fileName: filePath, teamId: teamId, fileId: fileId }),
+			body: JSON.stringify({ fileId: fileId }),
 		});
 
 		if (!pythonResp.ok) {
@@ -88,7 +90,6 @@ export async function POST(request: NextRequest) {
 		console.error('Error calling python server:', error);
 		return NextResponse.json({ error: 'Failed to call python server', details: String(error) }, { status: 500 });
 	}
-	console.log('file: ', file.name, ',', file.type, 'teamId: ', teamId);
 
-	return (NextResponse.json({ message: `File ${filePath} uploaded successfully` }));
+	return (NextResponse.json({ message: `deleted successfully` }));
 }

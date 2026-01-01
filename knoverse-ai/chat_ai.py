@@ -43,7 +43,7 @@ def format_chat_history_from_supabase(rows):
     return turns
 
 
-def create_rag_chain():
+def create_rag_chain(team_id: str):
     """Lazily create and return a RAG chain (rag_chain, retriever).
 
     This imports the heavy dependencies only when needed.
@@ -85,7 +85,11 @@ Answer:"""
 
     llm = Ollama(model=OLLAMA_LLM_MODEL, base_url=OLLAMA_BASE_URL, temperature=0.0)
 
-    retriever = vector_store.as_retriever(search_kwargs={})
+    retriever = vector_store.as_retriever(search_kwargs={
+        "filter": {
+            "team_id": team_id
+        }
+    })
 
     prompt = PromptTemplate.from_template(PROMPT_TEMPLATE)
 
@@ -106,7 +110,7 @@ Answer:"""
     return rag_chain, retriever
 
 
-def chat(user_message: str, chat_session: str) -> str:
+def chat(user_message: str, chat_session: str, team_id: str) -> str:
     """Main chat entrypoint.
 
     - Loads chat history for `chat_session` from Supabase
@@ -136,7 +140,7 @@ def chat(user_message: str, chat_session: str) -> str:
     chat_history = format_chat_history_from_supabase(rows)
 
     # Build the RAG chain and retriever
-    rag_chain, retriever = create_rag_chain()
+    rag_chain, retriever = create_rag_chain(team_id)
 
     # The rag_chain expects a dict with keys question and chat_history
     payload = {"question": user_message, "chat_history": chat_history}
@@ -164,4 +168,4 @@ def chat(user_message: str, chat_session: str) -> str:
 if __name__ == "__main__":
     # quick smoke test: ensure module imports and chat function are callable
     # print("chat callable:", callable(chat))
-    print("chat('Hello', 'e2b07688-2243-4069-8dce-69cf45a26905') =", chat("is this possible to complete the Auth APIs requirement by the release of our product", "e2b07688-2243-4069-8dce-69cf45a26905"))
+    print("chat('Hello', 'e2b07688-2243-4069-8dce-69cf45a26905') =", chat("explain me about the timeline", "e2b07688-2243-4069-8dce-69cf45a26905", "2285d04b-98c9-4a1e-9276-941f5cd77d67"))

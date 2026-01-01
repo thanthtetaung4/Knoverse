@@ -28,6 +28,28 @@ export const users = pgTable('users', {
   }).defaultNow(),
 });
 
+/* =====================================================
+   TEAM FILES
+   ===================================================== */
+
+export const teamFiles = pgTable('team_files', {
+  // legacy/simple table structure used in your DB
+  // id is an int8 in the actual DB; using integer() here to represent it
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+
+  teamId: uuid('team_id')
+    .notNull()
+    .references(() => teams.id, { onDelete: 'cascade' }),
+
+  objectId: uuid('object_id').notNull(),
+});
+
+export type TeamFile = typeof teamFiles.$inferSelect;
+
+export type TeamFileInsert = typeof teamFiles.$inferInsert;
+
 export type UserDB = typeof users.$inferSelect;
 
 /* =====================================================

@@ -62,7 +62,7 @@ def initialize_pinecone() -> str:
     return PINECONE_INDEX_NAME
 
 
-def load_and_split_pdf(pdf_path: str) -> List:
+def load_and_split_pdf(pdf_path: str, team_id: str, file_id: str) -> List:
     """Load PDF and split into chunks."""
     print(f"\nLoading PDF from: {pdf_path}")
 
@@ -81,6 +81,9 @@ def load_and_split_pdf(pdf_path: str) -> List:
         separators=["\n\n", "\n", " ", ""]
     )
     chunks = text_splitter.split_documents(documents)
+    for chunk in chunks:
+        chunk.metadata["team_id"] = team_id
+        chunk.metadata["file_id"] = file_id
     print(f"Split into {len(chunks)} chunks")
 
     return chunks
@@ -112,7 +115,7 @@ def upload_to_pinecone(chunks: List, embeddings, index_name: str):
     return vector_store
 
 
-def uploadFile(path: string):
+def uploadFile(path: string, team_id:string, file_id:string):
     """Main workflow: Load PDF -> Create embeddings -> Upload to Pinecone."""
     try:
         # Validate configuration
@@ -127,7 +130,7 @@ def uploadFile(path: string):
         index_name = initialize_pinecone()
 
         # Step 2: Load and split PDF
-        chunks = load_and_split_pdf(path)
+        chunks = load_and_split_pdf(path, team_id, file_id)
 
         # Step 3: Create embeddings using Ollama
         embeddings = create_embeddings()
@@ -153,4 +156,4 @@ def uploadFile(path: string):
         raise
 
 if __name__ == "__main__":
-    uploadFile(sys.argv[1])
+    uploadFile(sys.argv[1], "2285d04b-98c9-4a1e-9276-941f5cd77d67")

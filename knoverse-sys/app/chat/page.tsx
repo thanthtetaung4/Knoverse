@@ -15,7 +15,7 @@ export default function ChatPage() {
 			const response = await fetch('/api/chat/sendMessage', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ message, sessionId: "e2b07688-2243-4069-8dce-69cf45a26905" }),
+				body: JSON.stringify({ message, sessionId: "e2b07688-2243-4069-8dce-69cf45a26905", teamId: "2285d04b-98c9-4a1e-9276-941f5cd77d67" }),
 			});
 
 			if (!response.ok) {

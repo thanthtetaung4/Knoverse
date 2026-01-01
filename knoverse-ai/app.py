@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request
 from supabase import create_client, Client
 import pinecone_file_upload as pfu
 import chat_ai as chat
+import pinecone_file_delete as pfd
 
 load_dotenv()
 app = Flask(__name__)
@@ -17,6 +18,8 @@ def health_check():
 def upload_file_endpoint():
     # Flask provides the request object from flask import request
     fileName: str = request.json.get('fileName')
+    teamId: str = request.json.get('teamId')
+    fileId: str = request.json.get('fileId')
     # download the file from request from supabase storage
     url: str = os.getenv("SUPABASE_URL", "").strip()
     key: str = os.getenv("SUPABASE_KEY")
@@ -50,7 +53,7 @@ def upload_file_endpoint():
     with open(fileName, "wb") as f:
         f.write(data)
     try:
-        pfu.uploadFile(fileName)
+        pfu.uploadFile(fileName, teamId, fileId)
         return jsonify({"status": "success", "message": f"File {fileName} uploaded successfully."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -59,9 +62,19 @@ def upload_file_endpoint():
 def char_endpoint():
     user_message: str = request.json.get('message')
     chat_session: str = request.json.get('sessionId')
+    team_id: str = request.json.get('teamId')
     try:
-        response_message = chat.chat(user_message, chat_session)
+        response_message = chat.chat(user_message, chat_session, team_id)
         print(f"Chat response: {response_message}")
         return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
+@app.route('/deleteFile', methods=['DELETE'])
+def delete_file_endpoint():
+    file_id: str = request.json.get('fileId')
+    try:
+        pfd.delete_file_from_pinecone(file_id)
+        return jsonify({"status": "success", "message": f"File with ID {file_id} deleted successfully."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

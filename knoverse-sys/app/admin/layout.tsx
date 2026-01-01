@@ -30,6 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 	const { user } = useUser();
 	const router = useRouter();
 
+
 	// undefined = loading, null = fetched but no user, object = response
 	const [userData, setUserData] = useState<ApiUserResponse | null | undefined>(undefined);
 
