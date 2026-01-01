@@ -37,11 +37,9 @@ async function supabaseDeleteFile(fileId: string, filePath: string) {
 *
 */
 export async function DELETE(request: NextRequest) {
-	const formData = await request.formData();
 	const authHeader = request.headers.get('Authorization')
 	const accessToken = authHeader?.replace('Bearer ', '')
-	const fileId = formData.get('fileId') as string | null;
-	const filePath = formData.get('filePath') as string | null; // assuming filePath is same as fileId for deletion
+	const { fileId, filePath } = await request.json();
 
 	console.log('Received fileId:', fileId);
 	if (!accessToken) {

@@ -6,11 +6,9 @@ import { eq } from "drizzle-orm";
 import checkUserRole from "@/lib/checkUserRole"
 
 export async function POST(request: NextRequest) {
-	const formData = await request.formData();
-	const teamName = formData.get("teamName") as string | null;
-	const description = formData.get("description") as string | null;
 	const authHeader = request.headers.get("Authorization");
 	const accessToken = authHeader?.replace("Bearer ", "");
+	const { teamName, description } = await request.json();
 
 	if (!accessToken) {
 		return NextResponse.json({ error: "Missing Authorization header" }, { status: 401 });

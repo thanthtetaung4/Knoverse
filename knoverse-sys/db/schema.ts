@@ -106,8 +106,6 @@ export const chatSessions = pgTable('chat_sessions', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
 
-  title: text('title'),
-
   createdAt: timestamp('created_at', {
     withTimezone: true,
   }).defaultNow(),
@@ -124,19 +122,11 @@ export const chatMessages = pgTable('chat_messages', {
     .notNull()
     .references(() => chatSessions.id, { onDelete: 'cascade' }),
 
-  senderId: uuid('sender_id').references(() => users.id, {
-    onDelete: 'set null',
-  }),
-
   role: text('role', {
     enum: ['user', 'assistant', 'admin'],
   }).notNull(),
 
   content: text('content').notNull(),
-
-  citations: jsonb('citations'),
-  confidence: real('confidence'),
-  latencyMs: integer('latency_ms'),
 
   createdAt: timestamp('created_at', {
     withTimezone: true,
@@ -157,14 +147,6 @@ export const analyticsEvents = pgTable('analytics_events', {
   userId: uuid('user_id').references(() => users.id, {
     onDelete: 'set null',
   }),
-
-  eventType: text('event_type', {
-    enum: [
-      'ai_chat_started',
-      'ai_message_sent',
-      'ai_response_generated',
-    ],
-  }).notNull(),
 
   createdAt: timestamp('created_at', {
     withTimezone: true,
