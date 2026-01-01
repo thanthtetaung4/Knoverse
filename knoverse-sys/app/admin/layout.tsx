@@ -1,14 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect} from "react";
 import { useUser } from "@/app/providers/UserProvider";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { LogoutButton } from "@/components/logout-button";
-import {
-  ApiUserResponse,
-  fetchUserDataFromApi,
-} from "@/app/providers/UserProvider";
 
 export default function AdminLayout({
   children,

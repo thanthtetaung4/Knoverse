@@ -30,7 +30,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased px-5 py-2 relative h-screen`}>
         <UserProvider>{children}</UserProvider>
       </body>
     </html>
