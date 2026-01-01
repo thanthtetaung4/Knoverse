@@ -30,8 +30,15 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased px-5 py-2 relative h-screen`}>
-        <UserProvider>{children}</UserProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {/* Apply saved/system theme ASAP to avoid flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(() => { try { const t = localStorage.getItem('theme'); const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; const isDark = t ? t === 'dark' : prefersDark; const cls = document.documentElement.classList; if (isDark) cls.add('dark'); else cls.remove('dark'); } catch {} })();",
+          }}
+        />
+        <UserProvider initialUser={user}>{children}</UserProvider>
       </body>
     </html>
   )
