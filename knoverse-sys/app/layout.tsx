@@ -29,8 +29,8 @@ export default async function RootLayout({
   // components can access it immediately.
 
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased px-5 py-2 relative h-screen`}>
         {/* Apply saved/system theme ASAP to avoid flash */}
         <script
           dangerouslySetInnerHTML={{
@@ -38,7 +38,7 @@ export default async function RootLayout({
               "(() => { try { const t = localStorage.getItem('theme'); const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; const isDark = t ? t === 'dark' : prefersDark; const cls = document.documentElement.classList; if (isDark) cls.add('dark'); else cls.remove('dark'); } catch {} })();",
           }}
         />
-        <UserProvider initialUser={user}>{children}</UserProvider>
+        <UserProvider>{children}</UserProvider>
       </body>
     </html>
   )

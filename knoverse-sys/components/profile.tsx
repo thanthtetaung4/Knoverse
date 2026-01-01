@@ -12,7 +12,7 @@ interface FieldData {
 function TextField(field: FieldData) {
 	return <div>
 		<p className="text-xs mb-1 text-gray-500">{field.discription}</p>
-		<p className="border py-3 px-3 w-64 mb-2 rounded-lg bg-gray-50">{field.fieldContent}</p>
+		<p className="border py-3 px-3 w-64 mb-2 rounded-lg bg-gray-50 dark:bg-card">{field.fieldContent}</p>
 	</div>
 }
 
@@ -20,7 +20,7 @@ export default function ProfileTab() {
 	const [trigger, setTrigger] = useState<boolean>(false)
 	
 	return <div>
-		<div className={`border rounded-3xl w-${trigger ? "80" : "52"} p-${trigger ? "4" : "2"} h-full flex flex-col items-center`}>
+		<div className={`border rounded-3xl ${trigger ? "w-80 p-4" : "w-15 px-2 py-4"} h-full flex flex-col items-center`}>
 			<Image 
 				src="/profile.jpg"
 				alt="Profile"
