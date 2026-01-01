@@ -62,7 +62,7 @@ export default function AdminLayout({
 			  <AvatarImage src="https://github.com/shadcn.png" />
 			  <AvatarFallback>CN</AvatarFallback>
 			</Avatar>				
-	    	<h2 className="font-bold text-base md:text-lg">{userData.user.fullName}</h2>
+	    	<h2 className="font-bold text-base md:text-lg">{user.fullName}</h2>
 		</aside>
 		<aside className="flex-row gap-4 md:flex md:gap-4">
 			<LogoutButton />
