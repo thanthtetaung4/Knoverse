@@ -36,7 +36,7 @@ async function supabaseDeleteFile(fileId: string, filePath: string) {
 * and call the python server to vectorize the file
 *
 */
-export async function POST(request: NextRequest) {
+export async function DELETE(request: NextRequest) {
 	const formData = await request.formData();
 	const authHeader = request.headers.get('Authorization')
 	const accessToken = authHeader?.replace('Bearer ', '')
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 	// Upload file to Supabase Storage
 	try {
 		const deleteResponse = await supabaseDeleteFile(fileId, filePath!);
-		console.log('File deleted from Supabase at path:', filePath);
+		console.log('File deleted from Supabase at path:', deleteResponse);
 	} catch (error: unknown) {
 		return NextResponse.json({ error: 'File delete failed', details: error }, { status: 500 });
 	}

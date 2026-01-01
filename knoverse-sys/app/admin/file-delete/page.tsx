@@ -1,7 +1,7 @@
 'use client'
 import { getAccessToken } from "@/lib/auth/getAccessToken";
 
-export default function fileUploadPage() {
+export default function fileDeletePage() {
 	const handleFileDelete = async (fileId: string, filePath: string) => {
 		const formData = new FormData();
 		formData.append('fileId', fileId);
@@ -9,7 +9,7 @@ export default function fileUploadPage() {
 
 		const token = await getAccessToken();
 		const res = await fetch('/api/admin/deleteFile', {
-			method: 'POST',
+			method: 'DELETE',
 			headers: {
 				'Authorization': `Bearer ${token}`
 			},
