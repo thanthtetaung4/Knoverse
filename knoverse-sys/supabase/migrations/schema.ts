@@ -14,7 +14,6 @@ export const analyticsEvents = pgTable("analytics_events", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	teamId: uuid("team_id").notNull(),
 	userId: uuid("user_id"),
-	eventType: text("event_type").notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [
 	foreignKey({
@@ -102,11 +101,6 @@ export const teamFiles = pgTable("team_files", {
 	teamId: uuid("team_id").notNull(),
 	objectId: uuid("object_id").notNull(),
 }, (table) => [
-	foreignKey({
-			columns: [table.objectId],
-			foreignColumns: [objects.id],
-			name: "team_files_object_id_fkey"
-		}),
 	foreignKey({
 			columns: [table.teamId],
 			foreignColumns: [teams.id],

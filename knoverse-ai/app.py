@@ -57,7 +57,7 @@ def upload_file_endpoint():
         return jsonify({"status": "success", "message": f"File {fileName} uploaded successfully."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-    
+
 @app.route('/chat', methods=['POST'])
 def char_endpoint():
     user_message: str = request.json.get('message')
@@ -69,7 +69,7 @@ def char_endpoint():
         return jsonify({"status": "success"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-    
+
 @app.route('/deleteFile', methods=['DELETE'])
 def delete_file_endpoint():
     file_id: str = request.json.get('fileId')
@@ -78,3 +78,6 @@ def delete_file_endpoint():
         return jsonify({"status": "success", "message": f"File with ID {file_id} deleted successfully."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000)

@@ -61,7 +61,7 @@ export default function ProtectedPage() {
       console.log('API response:', data.userId)
 
       // Use Supabase client for frontend queries (Drizzle is server-only)
-      const userData = await fetch('/api/get/getUser', {
+      const userData = await fetch('/api/get/user', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }

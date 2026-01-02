@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { teams, analyticsEvents, users, usersInAuth, chatSessions, chatMessages, objectsInStorage, teamFiles, teamMembers } from "./schema";
+import { teams, analyticsEvents, users, chatSessions, chatMessages, teamFiles, teamMembers } from "./schema";
 
 export const analyticsEventsRelations = relations(analyticsEvents, ({one}) => ({
 	team: one(teams, {
@@ -19,18 +19,10 @@ export const teamsRelations = relations(teams, ({many}) => ({
 	teamMembers: many(teamMembers),
 }));
 
-export const usersRelations = relations(users, ({one, many}) => ({
+export const usersRelations = relations(users, ({many}) => ({
 	analyticsEvents: many(analyticsEvents),
-	usersInAuth: one(usersInAuth, {
-		fields: [users.id],
-		references: [usersInAuth.id]
-	}),
 	chatSessions: many(chatSessions),
 	teamMembers: many(teamMembers),
-}));
-
-export const usersInAuthRelations = relations(usersInAuth, ({many}) => ({
-	users: many(users),
 }));
 
 export const chatSessionsRelations = relations(chatSessions, ({one, many}) => ({
@@ -53,18 +45,10 @@ export const chatMessagesRelations = relations(chatMessages, ({one}) => ({
 }));
 
 export const teamFilesRelations = relations(teamFiles, ({one}) => ({
-	objectsInStorage: one(objectsInStorage, {
-		fields: [teamFiles.objectId],
-		references: [objectsInStorage.id]
-	}),
 	team: one(teams, {
 		fields: [teamFiles.teamId],
 		references: [teams.id]
 	}),
-}));
-
-export const objectsInStorageRelations = relations(objectsInStorage, ({many}) => ({
-	teamFiles: many(teamFiles),
 }));
 
 export const teamMembersRelations = relations(teamMembers, ({one}) => ({

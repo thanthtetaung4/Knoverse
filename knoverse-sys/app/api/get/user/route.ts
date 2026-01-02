@@ -13,6 +13,10 @@ export async function GET (request: NextRequest) {
 		return new Response(JSON.stringify({ error: authResult.error }), { status: 401 });
 	}
 
+	if (!authResult.user) {
+		return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+	}
+
 	// Fetch the application user from the database
 	const appUser = await getUser(authResult.user);
 	if (!appUser) {
