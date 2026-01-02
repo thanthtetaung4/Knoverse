@@ -11,7 +11,7 @@ export default function Navbar() {
     <>
     <nav>
       {user ? (
-        <p>Welcome, {user.email}. You are an {user.role}</p>
+        <p>Welcome, {user.id}. You are an {user.role}</p>
       ) : (
         <p>Not logged in</p>
       )}

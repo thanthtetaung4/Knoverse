@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import UserProvider from './providers/UserProvider'
-import { createClient } from '@/lib/supabase/server'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -28,17 +27,18 @@ export default async function RootLayout({
   // This runs on the server for every request in the app router. We pass the
   // user down into the client-side UserProvider as `initialUser` so client
   // components can access it immediately.
-  const supabase = await createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  const user = session?.user ?? null
 
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <UserProvider initialUser={user}>{children}</UserProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased px-5 py-2 relative h-screen`}>
+        {/* Apply saved/system theme ASAP to avoid flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(() => { try { const t = localStorage.getItem('theme'); const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; const isDark = t ? t === 'dark' : prefersDark; const cls = document.documentElement.classList; if (isDark) cls.add('dark'); else cls.remove('dark'); } catch {} })();",
+          }}
+        />
+        <UserProvider>{children}</UserProvider>
       </body>
     </html>
   )
