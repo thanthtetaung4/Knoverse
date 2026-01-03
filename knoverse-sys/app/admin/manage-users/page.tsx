@@ -89,7 +89,9 @@ export default function ManageUserPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [page, setPage] = React.useState(1);
-  const [selectedUsers, setSelectedUsers] = React.useState<Set<string | number>>(new Set());
+  const [selectedUsers, setSelectedUsers] = React.useState<
+    Set<string | number>
+  >(new Set());
   const [showAddDialog, setShowAddDialog] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [newUser, setNewUser] = React.useState({
@@ -237,7 +239,10 @@ export default function ManageUserPage() {
 
       // API returns user, email and password; update local list with authoritative user
       const returnedPassword = json.password ?? "";
-      setCreatedCredentials({ email: json.email ?? newUser.mail, password: returnedPassword });
+      setCreatedCredentials({
+        email: json.email ?? newUser.mail,
+        password: returnedPassword,
+      });
 
       const serverUser = json.user ?? null;
       if (serverUser) {
@@ -246,12 +251,18 @@ export default function ManageUserPage() {
           mail: serverUser.email ?? newUser.mail,
           username: serverUser.fullName ?? newUser.username,
           row: serverUser.role ?? newUser.row,
-          date: serverUser.createdAt ? new Date(serverUser.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          date: serverUser.createdAt
+            ? new Date(serverUser.createdAt).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
         };
         setDatas((prev) => [...prev, mapped]);
       } else {
         // fallback to optimistic insert
-        const newId = Math.max(...datas.map((d) => (typeof d.id === 'number' ? d.id : 0)), 0) + 1;
+        const newId =
+          Math.max(
+            ...datas.map((d) => (typeof d.id === "number" ? d.id : 0)),
+            0
+          ) + 1;
         const today = new Date().toISOString().split("T")[0];
         setDatas([
           ...datas,
