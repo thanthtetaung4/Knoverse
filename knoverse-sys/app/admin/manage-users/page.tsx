@@ -37,7 +37,7 @@ export default function ManageUserPage() {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
   // Filter data based on search query
-  const filteredData = datas.filter(user => 
+  const filteredData = datas.filter(user =>
     user.mail.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.row.toLowerCase().includes(searchQuery.toLowerCase())
@@ -106,8 +106,8 @@ export default function ManageUserPage() {
 
       <div className="mb-4 flex justify-end gap-3">
         <div className="flex-1 max-w-sm">
-          <Input 
-            placeholder="Search by email, name, or role..." 
+          <Input
+            placeholder="Search by email, name, or role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />

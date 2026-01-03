@@ -16,7 +16,7 @@ export type ApiUserResponse = { user: UserDB | null };
 
 export async function fetchUserDataFromApi(accessToken: string): Promise<ApiUserResponse | null> {
   try {
-    const res = await fetch("/api/get/getUser", {
+    const res = await fetch("/api/get/user", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!res.ok) {

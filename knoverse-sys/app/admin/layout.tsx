@@ -9,7 +9,7 @@ import { LogoutButton } from '@/components/logout-button'
 import ThemeToggle from '@/components/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from '@/components/ui/separator';
-import {FaCog, FaSignOutAlt,FaSun,FaMoon	,FaQuestion, FaSearch} from 'react-icons/fa';
+import {FaCog, FaSignOutAlt,FaSun,FaMoon,FaQuestion, FaSearch} from 'react-icons/fa';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
