@@ -17,6 +17,7 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function AdminPage() {
+  const [loading, setLoading] = useState<boolean>(true);
   const [totalUsers, setTotalUsers] = useState<string | null>(null);
   const [totalFiles, setTotalFiles] = useState<string | null>(null);
   const [activeTeams, setActiveTeams] = useState<string | null>(null);
@@ -33,9 +34,13 @@ export default function AdminPage() {
   const [teamChartData, setTeamChartData] = useState<
     Array<{ teamName: string; userCount: number; activityCount: number }>
   >([]);
-  const { accessToken } = useUser();
+  const { accessToken, user } = useUser();
+  console.log("AdminPage user:", user, "accessToken:", accessToken);
 
   useEffect(() => {
+    if (!accessToken) return;
+
+    setLoading(true);
     const supabase = createClient();
 
     async function fetchTeamStats() {
@@ -126,7 +131,7 @@ export default function AdminPage() {
         }
       )
       .subscribe();
-
+    setLoading(false);
     return () => {
       try {
         subscription.unsubscribe();
@@ -136,66 +141,75 @@ export default function AdminPage() {
     };
   }, [accessToken]);
 
-  return (
-    <div>
-      {/* Header Section */}
-      <div className="mb-8">
-        <HeaderCard
-          title="Admin Dashboard"
-          description="Overview of key metrics and user activity"
-        />
-      </div>
+  if (!accessToken || loading) {
+    return <div>loading</div>;
+  }
 
-      {/* Stats Cards Section */}
+  return (
+    <>
       <div>
-        <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <StatsCard
-            title="Total Users"
-            value={totalUsers ? totalUsers : "N/A"}
-            icon={FaUsers}
-          />
-          <StatsCard
-            title="Active Teams"
-            value={activeTeams ? activeTeams : "N/A"}
-            icon={FaProjectDiagram}
-          />
-          <StatsCard
-            title="Files Uploaded"
-            value={totalFiles ? totalFiles : "N/A"}
-            icon={FaFileAlt}
-            iconClassName="text-4xl text-blue-600"
+        {/* Header Section */}
+        <div className="mb-8">
+          <HeaderCard
+            title="Admin Dashboard"
+            description="Overview of key metrics and user activity"
           />
         </div>
-      </div>
 
-      {/* User Activity Section */}
-      <div className="mt-12">
-        <h2 className="text-3xl font-sans font-bold mb-4">User Activity</h2>
-      </div>
-      <div className="mt-8 grid sm:grid-cols-1 md:grid-cols-2 gap-8">
-        {/* User Activity Chart */}
-        <Card className="p-4 border rounded-lg">
-          <ChartContainer config={chartConfig}>
-            <BarChart width={600} height={300} data={teamChartData}>
-              <XAxis dataKey="teamName" />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="userCount" fill={chartConfig.users.color} />
-              <Bar dataKey="activityCount" fill={chartConfig.activity.color} />
-            </BarChart>
-          </ChartContainer>
-        </Card>
+        {/* Stats Cards Section */}
+        <div>
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <StatsCard
+              title="Total Users"
+              value={totalUsers ? totalUsers : "N/A"}
+              icon={FaUsers}
+            />
+            <StatsCard
+              title="Active Teams"
+              value={activeTeams ? activeTeams : "N/A"}
+              icon={FaProjectDiagram}
+            />
+            <StatsCard
+              title="Files Uploaded"
+              value={totalFiles ? totalFiles : "N/A"}
+              icon={FaFileAlt}
+              iconClassName="text-4xl text-blue-600"
+            />
+          </div>
+        </div>
 
-        {/* Teams With Most Activity */}
-        <Card className="p-4 border rounded-lg">
-          <h3 className="text-2xl font-semibold mb-4">
-            Teams With Most Activity
-          </h3>
-          {topTeams?.map((team, index) => (
-            <TeamActivityCard team={team} key={index} />
-          ))}
-        </Card>
+        {/* User Activity Section */}
+        <div className="mt-12">
+          <h2 className="text-3xl font-sans font-bold mb-4">User Activity</h2>
+        </div>
+        <div className="mt-8 grid sm:grid-cols-1 md:grid-cols-2 gap-8">
+          {/* User Activity Chart */}
+          <Card className="p-4 border rounded-lg">
+            <ChartContainer config={chartConfig}>
+              <BarChart width={600} height={300} data={teamChartData}>
+                <XAxis dataKey="teamName" />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="userCount" fill={chartConfig.users.color} />
+                <Bar
+                  dataKey="activityCount"
+                  fill={chartConfig.activity.color}
+                />
+              </BarChart>
+            </ChartContainer>
+          </Card>
+
+          {/* Teams With Most Activity */}
+          <Card className="p-4 border rounded-lg">
+            <h3 className="text-2xl font-semibold mb-4">
+              Teams With Most Activity
+            </h3>
+            {topTeams?.map((team, index) => (
+              <TeamActivityCard team={team} key={index} />
+            ))}
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

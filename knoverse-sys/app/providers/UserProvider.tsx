@@ -47,11 +47,31 @@ export default function UserProvider({
 
   // auth listener
   useEffect(() => {
-    const load = async () => {
+    let isMounted = true;
+
+    const init = async () => {
       const { data } = await supabase.auth.getSession();
+      if (!isMounted) return;
       setSession(data.session ?? null);
     };
-    load();
+
+    init();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      // update session immediately on auth change (sign in / sign out / token refresh)
+      setSession(session ?? null);
+    });
+
+    return () => {
+      isMounted = false;
+      try {
+        subscription.unsubscribe();
+      } catch (e) {
+        console.warn("Failed to unsubscribe auth listener", e);
+      }
+    };
   }, []);
 
   // fetch user ONLY when session changes
