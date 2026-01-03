@@ -42,11 +42,16 @@ export async function POST(request: NextRequest) {
   if (!sessionId) {
     try {
       // Cast the insert result to an array with objects that contain id so TypeScript recognizes it.
-      const inserted = (await db.insert(chatSessions).values({
-        userId: user.id,
-        teamId: teamId,
-      })) as { id: string }[];
-      newSessionId = inserted[0]?.id;
+      const inserted = await db
+        .insert(chatSessions)
+        .values({
+          userId: user.id,
+          teamId: teamId,
+        })
+        .returning({ insertedId: chatSessions.id });
+      console.log("Insert result:", inserted);
+      console.log("Created new chat session with id:", newSessionId);
+      newSessionId = inserted[0].insertedId;
     } catch (error: unknown) {
       return NextResponse.json(
         { error: "Error creating new chat session" },
@@ -56,11 +61,10 @@ export async function POST(request: NextRequest) {
   }
   let userId;
   try {
-    const idToCheck = newSessionId as string;
     userId = await db
       .select({ userId: chatSessions.userId })
       .from(chatSessions)
-      .where(eq(chatSessions.id, idToCheck));
+      .where(eq(chatSessions.id, newSessionId));
   } catch (error: unknown) {
     void error;
     return NextResponse.json(
