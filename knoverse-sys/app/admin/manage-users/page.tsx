@@ -23,7 +23,15 @@ import {
 } from "@/components/ui/select";
 import { useUser } from "@/app/providers/UserProvider";
 
-const initialData = [
+type UserRow = {
+  id: string | number;
+  mail: string;
+  username: string;
+  row: string;
+  date: string;
+};
+
+const initialData: UserRow[] = [
   {
     id: 1,
     mail: "john.doe@example.com",
@@ -77,11 +85,11 @@ const initialData = [
 
 export default function ManageUserPage() {
   const pageSize = 8;
-  const [datas, setDatas] = React.useState(initialData);
+  const [datas, setDatas] = React.useState<UserRow[]>(initialData as UserRow[]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [page, setPage] = React.useState(1);
-  const [selectedUsers, setSelectedUsers] = React.useState(new Set());
+  const [selectedUsers, setSelectedUsers] = React.useState<Set<string | number>>(new Set());
   const [showAddDialog, setShowAddDialog] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [newUser, setNewUser] = React.useState({
@@ -172,7 +180,7 @@ export default function ManageUserPage() {
     setPage(Math.min(filteredTotalPages, Math.max(1, p)));
   const pages = Array.from({ length: filteredTotalPages }, (_, i) => i + 1);
 
-  const handleSelectUser = (userId: number) => {
+  const handleSelectUser = (userId: string | number) => {
     const newSelected = new Set(selectedUsers);
     if (newSelected.has(userId)) {
       newSelected.delete(userId);
@@ -227,28 +235,37 @@ export default function ManageUserPage() {
         return;
       }
 
-      // API returns email and password; show to admin for copy-paste
-      const returnedEmail = json.email ?? newUser.mail;
+      // API returns user, email and password; update local list with authoritative user
       const returnedPassword = json.password ?? "";
-      setCreatedCredentials({
-        email: returnedEmail,
-        password: returnedPassword,
-      });
-      // optimistic local update (keep existing behaviour)
-      const newId = Math.max(...datas.map((d) => d.id), 0) + 1;
-      const today = new Date().toISOString().split("T")[0];
-      setDatas([
-        ...datas,
-        {
-          id: newId,
-          mail: newUser.mail,
-          username: newUser.username,
-          row: newUser.row,
-          date: today,
-        },
-      ]);
+      setCreatedCredentials({ email: json.email ?? newUser.mail, password: returnedPassword });
+
+      const serverUser = json.user ?? null;
+      if (serverUser) {
+        const mapped = {
+          id: serverUser.id,
+          mail: serverUser.email ?? newUser.mail,
+          username: serverUser.fullName ?? newUser.username,
+          row: serverUser.role ?? newUser.row,
+          date: serverUser.createdAt ? new Date(serverUser.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        };
+        setDatas((prev) => [...prev, mapped]);
+      } else {
+        // fallback to optimistic insert
+        const newId = Math.max(...datas.map((d) => (typeof d.id === 'number' ? d.id : 0)), 0) + 1;
+        const today = new Date().toISOString().split("T")[0];
+        setDatas([
+          ...datas,
+          {
+            id: newId,
+            mail: newUser.mail,
+            username: newUser.username,
+            row: newUser.row,
+            date: today,
+          },
+        ]);
+      }
+
       setNewUser({ mail: "", username: "", row: "Member" });
-      // close add dialog and open success dialog
       setShowAddDialog(false);
       setShowSuccessDialog(true);
     } catch (err) {
@@ -384,7 +401,7 @@ export default function ManageUserPage() {
               </tr>
             </thead>
             <tbody>
-              {currentRows.map((u) => (
+              {currentRows.map((u: UserRow) => (
                 <tr key={u.id} className="border-b">
                   <td className="p-4">
                     <Checkbox

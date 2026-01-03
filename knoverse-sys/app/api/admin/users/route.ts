@@ -126,6 +126,27 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
+
+      // Fetch the created/updated user row to return to client
+      const createdRows = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          fullName: users.fullName,
+          role: users.role,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .where(eq(users.id, userId));
+
+      const createdUser = createdRows[0] ?? null;
+
+      return NextResponse.json({
+        message: `User created successfully with email: ${email}`,
+        user: createdUser,
+        email,
+        password,
+      });
     } catch (error) {
       console.error("Error updating user in database:", error);
       return NextResponse.json(
@@ -133,11 +154,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    return NextResponse.json({
-      message: `User updated successfully with email: ${email}`,
-      email,
-      password,
-    });
   } catch (error: unknown) {
     return NextResponse.json(
       { error: "User update failed", details: error },
