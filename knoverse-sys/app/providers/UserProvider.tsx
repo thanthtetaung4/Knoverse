@@ -1,21 +1,25 @@
-"use client"
+"use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react"
-import type { UserDB } from "@/db/schema"
-import { Session } from "@supabase/supabase-js"
-import { createClient } from "@/lib/supabase/client"
+import React, { createContext, useContext, useEffect, useState } from "react";
+import type { UserDB } from "@/db/schema";
+import { Session } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 
 type UserContextType = {
-  user: UserDB | null
-  setUser: (u: UserDB | null) => void
-}
+  user: UserDB | null;
+  setUser: (u: UserDB | null) => void;
+  accessToken: string | null;
+};
 
-const UserContext = createContext<UserContextType | undefined>(undefined)
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export type ApiUserResponse = { user: UserDB | null };
 
-export async function fetchUserDataFromApi(accessToken: string): Promise<ApiUserResponse | null> {
+export async function fetchUserDataFromApi(
+  accessToken: string
+): Promise<ApiUserResponse | null> {
   try {
+    console.log("fetchUserDataFromApi called with accessToken:", accessToken);
     const res = await fetch("/api/get/user", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -31,46 +35,52 @@ export async function fetchUserDataFromApi(accessToken: string): Promise<ApiUser
   }
 }
 
-export default function UserProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [user, setUser] = useState<UserDB | null>(null)
+export default function UserProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<UserDB | null>(null);
 
-  const supabase = createClient()
+  const supabase = createClient();
 
   // auth listener
   useEffect(() => {
-  const load = async () => {
-    const { data } = await supabase.auth.getSession()
-    setSession(data.session ?? null)
-  }
-  load()
-}, [])
+    const load = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session ?? null);
+    };
+    load();
+  }, []);
 
   // fetch user ONLY when session changes
   useEffect(() => {
-    if (!session) return
+    if (!session) return;
 
     const handleUser = async () => {
-      console.log("fetching user…")
-      const resp = await fetchUserDataFromApi(session.access_token)
-      console.log("resp user:", resp?.user)
-      setUser(resp?.user ?? null)
-    }
+      console.log("fetching user…");
+      const resp = await fetchUserDataFromApi(session.access_token);
+      console.log("resp user:", resp?.user);
+      setUser(resp?.user ?? null);
+    };
 
-    handleUser()
-  }, [session])
+    handleUser();
+  }, [session]);
 
   // console.log("session:", session)
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider
+      value={{ user, setUser, accessToken: session?.access_token ?? null }}
+    >
       {children}
     </UserContext.Provider>
-  )
+  );
 }
 
 export function useUser() {
-  const ctx = useContext(UserContext)
-  if (!ctx) throw new Error("useUser must be used within UserProvider")
-  return ctx
+  const ctx = useContext(UserContext);
+  if (!ctx) throw new Error("useUser must be used within UserProvider");
+  return ctx;
 }
