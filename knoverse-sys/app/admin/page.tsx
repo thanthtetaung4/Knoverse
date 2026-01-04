@@ -8,7 +8,7 @@ import { Bar, BarChart, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
 import { FaUsers, FaFileAlt, FaProjectDiagram } from "react-icons/fa";
 import HeaderCard from "@/components/dashboard-header-card";
-import TeamActivityCard from "@/components/team-activity-catd";
+import TeamActivityCard from "@/components/team-activity-card";
 import { createClient } from "@/lib/supabase/client";
 
 const chartConfig = {

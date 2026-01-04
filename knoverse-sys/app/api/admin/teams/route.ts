@@ -56,10 +56,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const formData = await request.formData();
-  const teamId = formData.get("teamId") as string | null;
   const authHeader = request.headers.get("Authorization");
   const accessToken = authHeader?.replace("Bearer ", "");
+  const { teamId } = await request.json();
 
   if (!accessToken) {
     return NextResponse.json(
