@@ -128,15 +128,26 @@ export default function ManageUserPage() {
           const users = json.users ?? [];
           if (mounted)
             setDatas(
-              users.map((u: any, i: number) => ({
-                id: u.id ?? i + 1,
-                mail: u.email ?? "",
-                username: u.fullName ?? "",
-                row: u.role ?? "",
-                date: u.createdAt
-                  ? new Date(u.createdAt).toISOString().split("T")[0]
-                  : "",
-              }))
+              users.map(
+                (
+                  u: {
+                    id?: string | number;
+                    email?: string;
+                    fullName?: string;
+                    role?: string;
+                    createdAt?: string | number;
+                  },
+                  i: number
+                ) => ({
+                  id: u.id ?? i + 1,
+                  mail: u.email ?? "",
+                  username: u.fullName ?? "",
+                  row: u.role ?? "",
+                  date: u.createdAt
+                    ? new Date(u.createdAt).toISOString().split("T")[0]
+                    : "",
+                })
+              )
             );
         }
       } catch (err) {

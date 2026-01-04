@@ -34,8 +34,11 @@ async function supabaseUploadFile(teamId: string, file: File) {
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
   const accessToken = authHeader?.replace("Bearer ", "");
-  const { file, teamId } = await request.json();
+  const formData = await request.formData();
+  const file = formData.get("fileUpload") as File | null;
+  const teamId = formData.get("teamId") as string | null;
 
+  console.log("Received file:", file, "teamId:", teamId);
   if (!accessToken) {
     return NextResponse.json(
       { error: "Missing Authorization header" },

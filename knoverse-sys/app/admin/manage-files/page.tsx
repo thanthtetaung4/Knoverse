@@ -1,23 +1,27 @@
-'use client'
+'use server'
 
-import { useUser } from '@/app/providers/UserProvider'
-import FileUploadForm  from '@/components/file-upload-form'
+import Link from 'next/link'
+import ManageFilesControls from '@/components/manage-files-controls'
+import { db } from '@/db'
+import { teams } from '@/db/schema'
+import HeaderCard from '@/components/dashboard-header-card'
+import TeamCard from '@/components/team-card'
 
-export default function Navbar() {
-  const { user } = useUser()
-
+export default async function ManageFilesPage() {
+  // fetch teams server-side
+  const teamRows = await db.select().from(teams)
 
   return (
-    <>
-    <nav>
-      {user ? (
-        <p>Welcome, {user.id}. You are an {user.role}</p>
-      ) : (
-        <p>Not logged in</p>
-      )}
-    </nav>
-    <FileUploadForm />
+    <div>
+      <HeaderCard title="Manage Files" description='Manage team files here' />
 
-    </>
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+      {teamRows.map((t: typeof teams.$inferSelect) => (
+          <TeamCard key={t.id} team={t} />
+        ))}
+      </section>
+
+      <ManageFilesControls />
+    </div>
   )
 }

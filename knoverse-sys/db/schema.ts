@@ -7,6 +7,7 @@ import {
   jsonb,
   integer,
   real,
+  pgSchema,
 } from 'drizzle-orm/pg-core';
 
 /* =====================================================
@@ -152,3 +153,21 @@ export const analyticsEvents = pgTable('analytics_events', {
     withTimezone: true,
   }).defaultNow(),
 });
+
+/* =====================================================
+   STORAGE (supabase) — buckets + objects
+   Mirrors common Supabase storage.tables: storage.buckets and storage.objects
+   ===================================================== */
+
+export const storage = pgSchema("storage");
+
+export const objects = storage.table("objects", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bucketId: text("bucket_id").notNull(),
+  name: text("name").notNull(),
+  owner: uuid("owner"),
+  ownerId: uuid("owner_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
