@@ -1,7 +1,6 @@
 "use client"
 import Image from "next/image";
 import { useUser } from "./providers/UserProvider";
-import { MdLightMode } from "react-icons/md";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import ProfileTab from "@/components/profile";
 
@@ -24,7 +23,7 @@ const Projects = [
 ]
 
 function ProjectCard({projectName, projectDescription}:ProjectType) {
-  return <Card className="h-40 w-80 px-4">
+  return <Card className="h-40 w-80 px-4 cursor-pointer " >
     <CardTitle>{ projectName }</CardTitle>
     <CardDescription>{ projectDescription }</CardDescription>
   </Card>
@@ -32,24 +31,16 @@ function ProjectCard({projectName, projectDescription}:ProjectType) {
 
 export default function Home() {
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex border rounded-3xl mb-2 justify-center items-center h-10">
-        <h3>Knoverse</h3>
-        <button className="absolute right-20">
-          <MdLightMode></MdLightMode>
-        </button>
+    <div className="flex gap-5 h-full">
+      <ProfileTab/>
+      <div>
+        <p className="mt-4 mb-10 text-3xl">Projects</p>
+        <div className="flex gap-4">
+          {
+            Projects.map((project) => <ProjectCard key={project.projectId} projectName={project.projectName} projectDescription={ project.projectDescription } />)
+          }
+        </div>
       </div>
-      <div className="flex gap-5 h-full">
-        <ProfileTab/>
-        <div>
-          <p className="mt-4 mb-10 text-3xl">Projects</p>
-          <div className="flex gap-4">
-            {
-              Projects.map((project) => <ProjectCard key={project.projectId} projectName={project.projectName} projectDescription={ project.projectDescription } />)
-            }
-          </div>
-        </div>
-        </div>
     </div>
   );
 }
