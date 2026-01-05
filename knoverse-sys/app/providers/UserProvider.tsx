@@ -92,7 +92,7 @@ export default function UserProvider({
   // console.log("session:", session)
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, accessToken: session?.access_token ?? null}}>
       {user?.role === 'member' &&
         <div className='flex flex-col h-full'>
           <div className="flex border rounded-3xl mb-2 justify-center items-center h-10">
