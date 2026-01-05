@@ -38,6 +38,7 @@ export default function ManageUserPage() {
   const params = useParams();
   const teamId = (params as unknown as { teamId?: string })?.teamId;
 
+
   // fetch files from API
   const fetchFiles = React.useCallback(async () => {
     if (!accessToken || !teamId) return;
