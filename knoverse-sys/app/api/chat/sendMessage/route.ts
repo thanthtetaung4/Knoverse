@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   if (!message || !teamId) {
     return NextResponse.json(
-      { error: "Missing message, sessionId or teamId" },
+      { error: "Missing message or teamId" },
       { status: 400 }
     );
   }
@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
         })
         .returning({ insertedId: chatSessions.id });
       console.log("Insert result:", inserted);
-      console.log("Created new chat session with id:", newSessionId);
       newSessionId = inserted[0].insertedId;
+      console.log("Created new chat session with id:", newSessionId);
     } catch (error: unknown) {
       return NextResponse.json(
         { error: "Error creating new chat session" },
@@ -84,14 +84,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log("Received message:", message, "for sessionId:", sessionId);
+  console.log("Received message:", message, "for sessionId:", newSessionId);
   try {
     const pythonServerBase = process.env.PY_SERVER_URL ?? "";
     const pythonEndpoint = `${pythonServerBase.replace(/\/$/, "")}/chat`;
     const pythonResp = await fetch(pythonEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, sessionId, teamId }),
+      body: JSON.stringify({ message, sessionId: newSessionId, teamId }),
     });
     console.log("Python server response status:", pythonResp.status);
   } catch (error: unknown) {

@@ -9,11 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
   FaCog,
-  FaSignOutAlt,
-  FaSun,
-  FaMoon,
-  FaQuestion,
-  FaSearch,
 } from "react-icons/fa";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -45,18 +40,18 @@ export default function AdminLayout({
           <Separator className="my-10" />
         </div>
         <nav className="flex gap-4 md:flex-col md:gap-6 overflow-x-auto md:overflow-x-visible">
-          <a href="/admin" className="hover:text-red-500">
+          <Link href="/admin" className="hover:text-red-500">
             Dashboard
-          </a>
-          <a href="/admin/manage-teams" className="hover:text-red-500">
+          </Link>
+          <Link href="/admin/manage-teams" className="hover:text-red-500">
             Manage Teams
-          </a>
-          <a href="/admin/manage-users" className="hover:text-red-500">
+          </Link>
+          <Link href="/admin/manage-users" className="hover:text-red-500">
             Manage Users
-          </a>
-          <a href="/admin/manage-files" className="hover:text-red-500">
+          </Link>
+          <Link href="/admin/manage-files" className="hover:text-red-500">
             Manage Files
-          </a>
+          </Link>
         </nav>
         <aside className="flex gap-2 md:flex-col md:gap-6 overflow-x-auto md:overflow-x-visible bottom-aside mt-auto">
           <aside className="flex gap-4 md:flex md:gap-4">

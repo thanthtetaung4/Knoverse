@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
   const file = formData.get("fileUpload") as File | null;
   const teamId = formData.get("teamId") as string | null;
 
+
   console.log("Received file:", file, "teamId:", teamId);
   if (!accessToken) {
     return NextResponse.json(
@@ -56,6 +57,14 @@ export async function POST(request: NextRequest) {
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
+
+
+  const newFile = new File(
+    [file],
+    `${file.name}-${teamId?.slice(0,8)}`,
+    { type: file.type }
+  );
+
   if (!teamId) {
     return NextResponse.json({ error: "No teamId provided" }, { status: 400 });
   }
@@ -69,7 +78,7 @@ export async function POST(request: NextRequest) {
   let fileId = "";
   // Upload file to Supabase Storage
   try {
-    const uploadResponse = await supabaseUploadFile(teamId, file);
+    const uploadResponse = await supabaseUploadFile(teamId, newFile);
     filePath = uploadResponse.path;
     fileId = uploadResponse.id;
     console.log("File uploaded to Supabase at path:", filePath);

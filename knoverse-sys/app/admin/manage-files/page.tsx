@@ -15,13 +15,13 @@ export default async function ManageFilesPage() {
     <div>
       <HeaderCard title="Manage Files" description='Manage team files here' />
 
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-      {teamRows.map((t: typeof teams.$inferSelect) => (
+      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {teamRows.map((t: typeof teams.$inferSelect) => (
           <TeamCard key={t.id} team={t} />
         ))}
       </section>
 
-      <ManageFilesControls />
+      {/* <ManageFilesControls /> */}
     </div>
   )
 }

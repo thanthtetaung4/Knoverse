@@ -55,6 +55,7 @@ export default function ManageUserPage() {
         const rows = (json.rows ?? []) as Array<{
           id: string | number;
           file: string;
+          createdAt: string;
         }>;
 		console.log("Fetched files:", rows);
         setFiles(
@@ -63,6 +64,7 @@ export default function ManageUserPage() {
             objectId: String(r.id),
             fileName: r.file,
             filePath: r.file,
+            createdAt: r.createdAt,
           }))
         );
       }
@@ -213,7 +215,7 @@ export default function ManageUserPage() {
             <table className="w-full border rounded-lg">
               <thead className="border-b">
                 <tr>
-                  <th className="w-[50px] p-4 text-left">
+                  <th className="w-12.5 p-4 text-left">
                     <Checkbox
                       checked={
                         selected.size === currentRows.length &&
@@ -236,7 +238,7 @@ export default function ManageUserPage() {
                         onCheckedChange={() => handleSelect(r.id)}
                       />
                     </td>
-                    <td className="p-4 font-medium">{r.fileName}</td>
+                    <td className="p-4 font-medium">{r.fileName?.slice(0, r.fileName.length - 9)}</td>
                     <td className="p-4 font-mono text-sm">{r.objectId}</td>
                     <td className="p-4 text-right">
                       {r.createdAt ? new Date(r.createdAt).toLocaleString() : ""}

@@ -200,7 +200,7 @@ export default function AdminPage() {
           </Card>
 
           {/* Teams With Most Activity */}
-          <Card className="p-4 border rounded-lg">
+          <Card className="p-4 border rounded-lg overflow-scroll max-h-110">
             <h3 className="text-2xl font-semibold mb-4">
               Teams With Most Activity
             </h3>
