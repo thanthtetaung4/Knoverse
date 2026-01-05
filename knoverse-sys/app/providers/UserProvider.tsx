@@ -1,9 +1,10 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import type { UserDB } from "@/db/schema";
-import { Session } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/client";
+import React, { createContext, useContext, useEffect, useState } from "react"
+import type { UserDB } from "@/db/schema"
+import { Session } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/client"
+import ThemeToggle from '@/components/theme-toggle';
 
 type UserContextType = {
   user: UserDB | null;
@@ -91,10 +92,19 @@ export default function UserProvider({
   // console.log("session:", session)
 
   return (
-    <UserContext.Provider
-      value={{ user, setUser, accessToken: session?.access_token ?? null }}
-    >
-      {children}
+    <UserContext.Provider value={{ user, setUser }}>
+      {user?.role === 'member' &&
+        <div className='flex flex-col h-full'>
+          <div className="flex border rounded-3xl mb-2 justify-center items-center h-10">
+            <h3>Knoverse</h3>
+            <div className='absolute right-20'>
+              <ThemeToggle noBorder />
+            </div>
+          </div>
+          {children}
+        </div>
+      }
+      {user?.role === 'admin' && children}
     </UserContext.Provider>
   );
 }

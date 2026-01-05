@@ -35,10 +35,12 @@ export default async function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(() => { try { const t = localStorage.getItem('theme'); const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; const isDark = t ? t === 'dark' : prefersDark; const cls = document.documentElement.classList; if (isDark) cls.add('dark'); else cls.remove('dark'); } catch {} })();",
+              "(() => { try { const applyTheme = () => { const t = localStorage.getItem('theme'); const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; const isDark = t ? t === 'dark' : prefersDark; const cls = document.documentElement.classList; if (isDark) cls.add('dark'); else cls.remove('dark'); }; applyTheme(); if (window.matchMedia) { const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)'); mediaQuery.addEventListener('change', applyTheme); } } catch {} })();",
           }}
         />
-        <UserProvider>{children}</UserProvider>
+          <UserProvider>
+            {children}
+          </UserProvider>
       </body>
     </html>
   )

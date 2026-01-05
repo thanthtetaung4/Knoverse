@@ -20,7 +20,7 @@ function applyTheme(theme: Theme) {
   else root.classList.remove("dark");
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ noBorder }: { noBorder?: boolean }) {
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
@@ -37,8 +37,10 @@ export default function ThemeToggle() {
     window.localStorage.setItem("theme", next);
   }
 
+  const btnClass = noBorder ? 'border-transparent dark:border-transparent hover:bg-transparent dark:hover:bg-transparent hover:shadow-none active:bg-transparent dark:active:bg-transparent active:shadow-none transition-none focus:outline-none focus:ring-0 focus-visible:border-transparent focus-visible:ring-0 dark:focus-visible:border-transparent bg-background dark:bg-background dark:hover:bg-background' : '';
+
   return (
-    <Button variant="outline" size="icon" onClick={toggle} aria-label="Toggle theme">
+    <Button variant="outline" size="icon" className={btnClass} onClick={toggle} aria-label="Toggle theme">
       {theme === "dark" ? (
         <FaSun className="h-4 w-4" />) : (
         <FaMoon className="h-4 w-4" />
