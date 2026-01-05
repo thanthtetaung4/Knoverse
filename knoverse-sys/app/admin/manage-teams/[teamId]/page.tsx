@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useUser } from "@/app/providers/UserProvider";
 import { useParams } from "next/navigation";
-
+import { UserDB } from "@/db/schema";
 type UserRow = {
   id: string | number;
   mail: string;
@@ -75,7 +75,7 @@ export default function ManageUserPage() {
           return;
         }
 
-        const users = (json.users ?? []) as Array<any>;
+        const users = (json.users ?? []) as Array<UserDB>;
         const memberIds = new Set(datas.map((d) => String(d.id)));
         const notMembers = users
           .filter((u) => !memberIds.has(String(u.id)))
@@ -124,7 +124,7 @@ export default function ManageUserPage() {
         const users = json.users ?? [];
 
         const members = await Promise.all(
-          users.map(async (u: any) => {
+          users.map(async (u: UserDB) => {
             try {
               const r = await fetch(`/api/admin/teams/members?userId=${u.id}`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
@@ -134,7 +134,7 @@ export default function ManageUserPage() {
               const teamsForUser = jr.teamId ?? [];
               const isMember =
                 Array.isArray(teamsForUser) &&
-                teamsForUser.some((t: any) => String(t.id) === String(teamId));
+                teamsForUser.some((t: UserDB) => String(t.id) === String(teamId));
               if (isMember) {
                 return {
                   id: u.id,

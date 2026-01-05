@@ -154,6 +154,8 @@ export const analyticsEvents = pgTable('analytics_events', {
   }).defaultNow(),
 });
 
+export type Analytics = typeof analyticsEvents.$inferSelect;
+
 /* =====================================================
    STORAGE (supabase) — buckets + objects
    Mirrors common Supabase storage.tables: storage.buckets and storage.objects

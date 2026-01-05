@@ -5,6 +5,17 @@ import { db } from "@/db";
 import checkUserRole from "@/lib/checkUserRole";
 import { count, desc, eq } from "drizzle-orm";
 
+type GraphData = {
+     teamId: string;
+        teamName: string | null;
+        userCount: number;
+}
+
+type TeamData = {
+     teamId: string;
+        teamName: string | null;
+        activityCount: number;
+}
 /*
  * Return the analytics usage data for admin dashboard
  * - number of users per team (from team_members)
@@ -66,7 +77,7 @@ export async function GET(request: NextRequest) {
       }
     >();
 
-    usersByTeam.forEach((r: any) => {
+    usersByTeam.forEach((r: GraphData) => {
       const id = r.teamId ?? null;
       statsMap.set(id, {
         teamName: r.teamName ?? null,
@@ -75,7 +86,7 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    activitiesByTeam.forEach((r: any) => {
+    activitiesByTeam.forEach((r: TeamData) => {
       const id = r.teamId ?? null;
       const existing = statsMap.get(id);
       if (existing) {

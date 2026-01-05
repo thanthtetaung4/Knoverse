@@ -16,6 +16,19 @@ const chartConfig = {
   activity: { label: "Activity", color: "#f8721a" },
 } satisfies ChartConfig;
 
+type GraphData = {
+     activityCount: number;
+        teamId: string;
+        teamName: string | null;
+        userCount: number;
+}
+
+type TeamData = {
+     teamId: string;
+        teamName: string | null;
+        activityCount: number;
+}
+
 export default function AdminPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [totalUsers, setTotalUsers] = useState<string | null>(null);
@@ -40,10 +53,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (!accessToken) return;
 
-    setLoading(true);
     const supabase = createClient();
 
     async function fetchTeamStats() {
+      setLoading(true);
       try {
         const res = await fetch("/api/admin/analytics/usage", {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -54,10 +67,10 @@ export default function AdminPage() {
         const top = (stats || [])
           .slice()
           .sort(
-            (a: any, b: any) => (b.activityCount ?? 0) - (a.activityCount ?? 0)
+            (a: TeamData, b: TeamData) => (b.activityCount ?? 0) - (a.activityCount ?? 0)
           )
           .slice(0, 5)
-          .map((s: any) => ({
+          .map((s: GraphData) => ({
             teamName: s.teamName ?? "Unknown",
             userCount: Number(s.userCount ?? 0),
             activityCount: Number(s.activityCount ?? 0),
@@ -65,8 +78,9 @@ export default function AdminPage() {
         setTeamChartData(top);
         // also set topTeams used by the UI list
         setTopTeams(
-          top.map((t: any) => ({ name: t.teamName, activity: t.activityCount }))
+          top.map((t: GraphData) => ({ name: t.teamName, activity: t.activityCount }))
         );
+        setLoading(false);
       } catch (err) {
         console.error("Error fetching team stats:", err);
       }
@@ -131,8 +145,7 @@ export default function AdminPage() {
         }
       )
       .subscribe();
-    setLoading(false);
-    return () => {
+      return () => {
       try {
         subscription.unsubscribe();
       } catch (e) {
