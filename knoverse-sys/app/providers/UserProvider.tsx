@@ -93,7 +93,7 @@ export default function UserProvider({
 
   return (
     <UserContext.Provider value={{ user, setUser, accessToken: session?.access_token ?? null}}>
-      {user?.role === 'member' &&
+      {user?.role === 'member' ? 
         <div className='flex flex-col h-full'>
           <div className="flex border rounded-3xl mb-2 justify-center items-center h-10">
             <h3>Knoverse</h3>
@@ -103,8 +103,8 @@ export default function UserProvider({
           </div>
           {children}
         </div>
+        : children
       }
-      {user?.role === 'admin' && children}
     </UserContext.Provider>
   );
 }

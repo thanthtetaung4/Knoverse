@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { useUser } from '../providers/UserProvider';
-import ChatList from '@/components/chatlist';
+import { useUser } from '@/app/providers/UserProvider';
 import { IoSend } from "react-icons/io5";
+
 
 function MainChat() {
 	const [message, setMessage] = useState<string>("");
@@ -42,24 +42,24 @@ export default function ChatPage() {
   // const {user} = useUser()
   // console.log("user: ", user)
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    const formData = new FormData(e.currentTarget);
-    const message = formData.get("message");
+	e.preventDefault();
+	setLoading(true);
+	const formData = new FormData(e.currentTarget);
+	const message = formData.get("message");
 
-    try {
-      const response = await fetch("/api/chat/sendMessage", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message,
-          sessionId: null,
-          teamId: "2285d04b-98c9-4a1e-9276-941f5cd77d67",
-        }),
-      });
+	try {
+	  const response = await fetch("/api/chat/sendMessage", {
+		method: "POST",
+		headers: {
+		  Authorization: `Bearer ${accessToken}`,
+		  "Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+		  message,
+		  sessionId: null,
+		  teamId: "2285d04b-98c9-4a1e-9276-941f5cd77d67",
+		}),
+	  });
 
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -74,8 +74,5 @@ export default function ChatPage() {
 		}
 		setLoading(false);
 	}
-	return (
-		<div className='flex h-full border rounded-3xl overflow-hidden'>
-			<MainChat/>
-		</div>)
+	return <MainChat/>
 }

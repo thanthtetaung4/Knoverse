@@ -4,10 +4,11 @@ import { IoIosMenu } from "react-icons/io";
 import { FaPen } from "react-icons/fa";
 import { IoChevronBackSharp } from "react-icons/io5";
 import { Separator } from "@/components/ui/separator"
+import { UserDB } from "@/db/schema";
 
 interface FieldData {
 	discription: string;
-	fieldContent: string;
+	fieldContent: string | null;
 }
 
 function TextField(field: FieldData) {
@@ -17,7 +18,12 @@ function TextField(field: FieldData) {
 	</div>
 }
 
-export default function ProfileTab() {
+function capitalizeFirst(value?: string | null): string | null {
+	if (!value) return null;
+	return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+export default function ProfileTab({ user }: { user: UserDB | null }) {
 	const [trigger, setTrigger] = useState<boolean>(false)
 	
 	return <div>
@@ -37,8 +43,8 @@ export default function ProfileTab() {
 				<div className="flex flex-col gap-3">
 					{/* <button className="border py-1 px-3 rounded-lg mt-3">Edit Profile</button> */}
 					<div className="flex flex-col mt-6">
-						<TextField discription="Username" fieldContent="Lawrence" />
-						<TextField discription="Role" fieldContent="Member"/>
+					<TextField discription="Username" fieldContent={capitalizeFirst(user?.fullName)} />
+					<TextField discription="Role" fieldContent={capitalizeFirst(user?.role)} />
 					</div>
 					<Separator className="my-2"/>
 					<button className="cursor-pointer border py-2.5 px-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium">
