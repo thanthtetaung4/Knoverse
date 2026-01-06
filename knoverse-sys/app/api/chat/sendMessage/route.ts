@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     const pythonResp = await fetch(pythonEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, sessionId, teamId }),
+      body: JSON.stringify({ message, sessionId: newSessionId, teamId }),
     });
     console.log("Python server response status:", pythonResp.status);
   } catch (error: unknown) {
@@ -113,5 +113,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     message: "Message sent to Python server successfully",
+    sessionId: newSessionId,
   });
 }

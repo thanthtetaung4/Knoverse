@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/db";
 import { chatSessions } from "@/db/schema";
-import { eq, asc} from "drizzle-orm";
+import { eq, asc, and } from "drizzle-orm";
 import { checkAuth } from "@/lib/auth/checkAuth";
 import { getUser } from "@/lib/supabase/getUser";
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       .select()
       .from(chatSessions)
       .where(
-        eq(chatSessions.teamId, teamId) && eq(chatSessions.userId, user.id)
+        and(eq(chatSessions.teamId, teamId), eq(chatSessions.userId, user.id))
       )
       .orderBy(asc(chatSessions.createdAt));
     return NextResponse.json({ chatSession: session || null });

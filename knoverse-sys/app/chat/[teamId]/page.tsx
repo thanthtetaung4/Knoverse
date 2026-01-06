@@ -1,12 +1,59 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/app/providers/UserProvider';
 import { IoSend } from "react-icons/io5";
+import { SetStateAction } from 'react';
 
+export interface SendMessageProps {
+	sending: boolean;
+	message: string;
+	teamId: string;
+	setSending: React.Dispatch<SetStateAction<boolean>>
+	setMessage: React.Dispatch<SetStateAction<string>>
+	accessToken: string | null;
+	sessionId?: string;
+	router: ReturnType<typeof useRouter>;
+}
+ export async function sendMessage({sending, message, teamId, sessionId, setSending, setMessage, accessToken, router}:SendMessageProps) {
+	if (sending) return;
+	const text = (message ?? "").toString().trim();
+	if (!text) return;
+	if (!teamId) return alert('Missing team id');
+	setSending(true);
+	try {
+		const response = await fetch('/api/chat/sendMessage', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({ message: text, sessionId: sessionId ?? null, teamId }),
+		});
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			throw new Error(errorText || 'Message send failed');
+		}
+		const json = await response.json();
+		if (!json?.sessionId) throw new Error('Missing sessionId in response');
+		router.push(`/chat/${teamId}/${json.sessionId}`);
+		setMessage("");
+	} catch (err: unknown) {
+		alert(err instanceof Error ? `Error sending message: ${err.message}` : 'Unknown error');
+	} finally {
+		setSending(false);
+	}
+};
 
 function MainChat() {
 	const [message, setMessage] = useState<string>("");
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+	const { accessToken } = useUser();
+	const params = useParams();
+	const teamId = (params as any)?.teamId;
+	const [sending, setSending] = useState<boolean>(false);
+	const router = useRouter();
 
 	useEffect(() => {
 		if (textareaRef.current) {
@@ -28,51 +75,12 @@ function MainChat() {
 						rows={1}
 						className='min-h-13 h-auto w-full p-4 resize-none overflow-hidden outline-none focus:outline-none focus:ring-0 focus:border-transparent'
 					/>
-					<IoSend className='mr-3' size={20}/>
+					<IoSend onClick={() => sendMessage({ sending, message, teamId, setSending, setMessage, accessToken, router })} className={`mr-3 ${sending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} size={20}/>
 				</div>
 			</div>
 		</div>
 	);
 }
 export default function ChatPage() {
-  const [text, setText] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const { accessToken } = useUser();
-  // const {user} = useUser()
-  // console.log("user: ", user)
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-	e.preventDefault();
-	setLoading(true);
-	const formData = new FormData(e.currentTarget);
-	const message = formData.get("message");
-
-	try {
-	  const response = await fetch("/api/chat/sendMessage", {
-		method: "POST",
-		headers: {
-		  Authorization: `Bearer ${accessToken}`,
-		  "Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-		  message,
-		  sessionId: null,
-		  teamId: "2285d04b-98c9-4a1e-9276-941f5cd77d67",
-		}),
-	  });
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(`Message send failed: ${errorText}`);
-			}
-		} catch (error: unknown) {
-			alert(
-				error instanceof Error
-					? `Error sending message: ${error.message}`
-					: "An unknown error occurred while sending the message."
-			);
-		}
-		setLoading(false);
-	}
 	return <MainChat/>
 }

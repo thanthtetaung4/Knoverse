@@ -1,12 +1,22 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/app/providers/UserProvider';
 import { IoSend } from "react-icons/io5";
+import { createClient } from '@/lib/supabase/client';
+import Message from '@/components/message';
+import { sendMessage } from '../page';
 
 
-function MainChat() {
+function MainChat({ sessionId }: { sessionId?: string}) {
 	const [message, setMessage] = useState<string>("");
+	const [messages, setMessages] = useState<any[]>([]);
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+	const { accessToken } = useUser();
+	const params = useParams();
+	const teamId = (params as any)?.teamId;
+	const [sending, setSending] = useState<boolean>(false);
+	const router = useRouter();
 
 	useEffect(() => {
 		if (textareaRef.current) {
@@ -15,11 +25,52 @@ function MainChat() {
 		}
 	}, [message]);
 
+	useEffect(() => {
+		if (!sessionId) return;
+		let mounted = true;
+		const fetchHistory = async () => {
+			try {
+				const res = await fetch(`/api/chat/getChatHistory/?chatSessionId=${sessionId}`, {
+					headers: { Authorization: `Bearer ${accessToken}` },
+				});
+				const json = await res.json();
+				if (mounted) setMessages(Array.isArray(json?.chatHistory) ? json.chatHistory : []);
+			} catch (err) {
+				console.error('Error loading chat history', err);
+			}
+		};
+		fetchHistory();
+
+		// subscribe to new messages
+		let chanRef: any = null;
+		const setupSubscription = async () => {
+			const supabase = createClient();
+			const chan = supabase
+				.channel(`public:chat_messages:session=${sessionId}`)
+				.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `chat_session_id=eq.${sessionId}` }, (payload: any) => {
+					const newRow = payload.new;
+					setMessages((prev) => [...prev, newRow]);
+				})
+				.subscribe();
+			chanRef = chan;
+		};
+		setupSubscription();
+
+		return () => {
+			mounted = false;
+			try { chanRef?.unsubscribe(); } catch {}
+		};
+	}, [sessionId, accessToken]);
+	console.log(messages)
 	return (
-		<div className='w-full -mt-30 p-5 flex flex-col'>
-			<div className='my-auto flex flex-col gap-10 justify-center items-center'>
-				<h3 className='text-3xl'>What the fuck u want?</h3>
-				<div className='border w-1/2 px-3 rounded-full flex items-center'>
+		<div className='w-full p-5 flex flex-col'>
+			<div className='overflow-auto h-[90vh] w-full mb-4 px-30'>
+				{messages.map((m) => 
+					<Message key={ m.id } content={m.content} role={ m.role} />
+				)}
+			</div>
+			<div className='flex justify-center items-center '>
+				<div className='border w-3/4 px-3 rounded-full flex items-center'>
 					<textarea
 						ref={textareaRef}
 						value={message}
@@ -28,51 +79,14 @@ function MainChat() {
 						rows={1}
 						className='min-h-13 h-auto w-full p-4 resize-none overflow-hidden outline-none focus:outline-none focus:ring-0 focus:border-transparent'
 					/>
-					<IoSend className='mr-3' size={20}/>
+					<IoSend onClick={() => sendMessage({ sending, message, teamId, sessionId, setSending, setMessage, accessToken, router })} className={`mr-3 ${sending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} size={20}/>
 				</div>
 			</div>
 		</div>
 	);
 }
 export default function ChatPage() {
-  const [text, setText] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const { accessToken } = useUser();
-  // const {user} = useUser()
-  // console.log("user: ", user)
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-	e.preventDefault();
-	setLoading(true);
-	const formData = new FormData(e.currentTarget);
-	const message = formData.get("message");
-
-	try {
-	  const response = await fetch("/api/chat/sendMessage", {
-		method: "POST",
-		headers: {
-		  Authorization: `Bearer ${accessToken}`,
-		  "Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-		  message,
-		  sessionId: null,
-		  teamId: "2285d04b-98c9-4a1e-9276-941f5cd77d67",
-		}),
-	  });
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(`Message send failed: ${errorText}`);
-			}
-		} catch (error: unknown) {
-			alert(
-				error instanceof Error
-					? `Error sending message: ${error.message}`
-					: "An unknown error occurred while sending the message."
-			);
-		}
-		setLoading(false);
-	}
-	return <MainChat/>
+  const params = useParams();
+  const sessionId = (params as any)?.sessionId;
+	return <MainChat sessionId={sessionId} />
 }
