@@ -113,5 +113,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     message: "Message sent to Python server successfully",
+    sessionId: newSessionId,
   });
 }

@@ -68,6 +68,9 @@ export const teams = pgTable('teams', {
   }).defaultNow(),
 });
 
+export type Team = typeof teams.$inferSelect;
+
+export type TeamInsert = typeof teams.$inferInsert;
 /* =====================================================
    TEAM MEMBERS (M:N)
    ===================================================== */

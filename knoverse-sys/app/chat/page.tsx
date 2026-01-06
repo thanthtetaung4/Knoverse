@@ -4,17 +4,6 @@ import { useUser } from '../providers/UserProvider';
 import ChatList from '@/components/chatlist';
 import { IoSend } from "react-icons/io5";
 
-function ChatSideBar() {
-	return <div className='border-r min-w-1/5'>
-				<h3 className='font-semibold text-xl border-b p-5'>Recent Chats</h3>
-				<div>
-					<ChatList chatName='Hello MFKs' />
-					<ChatList chatName='Hello MFKs' />
-					<ChatList chatName='Hello MFKs' />
-				</div>
-			</div>
-}
-
 function MainChat() {
 	const [message, setMessage] = useState<string>("");
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -87,7 +76,6 @@ export default function ChatPage() {
 	}
 	return (
 		<div className='flex h-full border rounded-3xl overflow-hidden'>
-			<ChatSideBar/>
 			<MainChat/>
 		</div>)
 }
