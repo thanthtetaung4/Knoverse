@@ -34,23 +34,25 @@ export default function Home() {
   }
 
   const fetchTeams = async () => {
-    try {
-      const response = await fetch("/api/get/user/teams/?userId=" + user?.id, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      const data = await response.json();
-      setTeams(Array.isArray(data?.teams) ? data.teams : []);
-    } catch (error) {
-      console.error("Error fetching teams:", error);
+    if (user) {
+      try {
+        const response = await fetch("/api/get/user/teams/?userId=" + user?.id, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const data = await response.json();
+        setTeams(Array.isArray(data?.teams) ? data.teams : []);
+      } catch (error) {
+        console.error("Error fetching teams:", error);
+      }
     }
   };
 
   useEffect(() => {
     fetchTeams();
-  }, []);
-
+  }, [user]);
+  console.log("teams: ", teams)
   return (
     <div className="flex gap-5 h-full">
       <ProfileTab user={ user} />
