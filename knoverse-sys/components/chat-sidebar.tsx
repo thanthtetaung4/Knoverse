@@ -6,7 +6,8 @@ import { useMessageSend } from "@/app/providers/MessageSendProvider";
 import ChatList from "@/components/chatlist";
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from "@/lib/supabase/client";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import BackBtn from "./backBtn";
+import { CiCirclePlus } from "react-icons/ci";
 
 type SessionItem = {
 	id: string;
@@ -27,6 +28,8 @@ export function ChatSideBar() {
 	const router = useRouter();
 	const { messageSend, setMessageSend } = useMessageSend();
 
+	console.log("messageSend in sidebar: ", messageSend);
+
 	// Fetch sessions when teamId changes or message is sent
 	useEffect(() => {
 		if (!teamId) return;
@@ -45,24 +48,24 @@ export function ChatSideBar() {
 			}
 		};
 		fetchSessions();
-
+		setMessageSend(false); // reset messageSend after fetching sessions
 		return () => {
 			mounted = false;
 		};
-	}, [teamId, accessToken, messageSend]);
+	}, [teamId, accessToken, messageSend, setMessageSend]);
 
 	// Realtime subscription for new chat_sessions
 	useEffect(() => {
 		if (!teamId) return;
-		
+
 		const supabase = createClient();
 		const channel = supabase
 			.channel(`public:chat_sessions:team=${teamId}`)
-			.on('postgres_changes', { 
-				event: 'INSERT', 
-				schema: 'public', 
-				table: 'chat_sessions', 
-				filter: `team_id=eq.${teamId}` 
+			.on('postgres_changes', {
+				event: 'INSERT',
+				schema: 'public',
+				table: 'chat_sessions',
+				filter: `team_id=eq.${teamId}`
 			}, (payload) => {
 				const newRow = payload.new as SessionItem;
 				setSessions((prev) => {
@@ -74,17 +77,21 @@ export function ChatSideBar() {
 			.subscribe();
 
 		return () => {
-			try { 
-				channel.unsubscribe(); 
-			} catch { 
+			try {
+				channel.unsubscribe();
+			} catch {
 				console.log('failed to unsubscribe');
 			}
 		};
-	}, [teamId]);
+	}, [teamId, messageSend]);
 	console.log("teamid: ", teamId);
 	console.log("sessions: ", sessions);
 	return <div className='border-r min-w-1/5'>
 			<h3 className='font-semibold text-xl border-b p-5'>Recent Chats</h3>
+				<div className="flex w-full justify-between px-3 py-2" >
+					<BackBtn size={20} />
+					<CiCirclePlus className={`cursor-pointer hover:text-gray-500`} size={20} onClick={() => router.push(`/chat/${teamId}`)}/>
+				</div>
 			<div>
 			{sessions.map((session) => <ChatList key={session.id} chatName={session.name ?? "Untitled"} onClick={() => router.push(`/chat/${teamId}/${session.id}`)}/>)}
 			</div>

@@ -20,15 +20,18 @@ function applyTheme(theme: Theme) {
   else root.classList.remove("dark");
 }
 
+function getInitialTheme(): Theme {
+  if (typeof window === "undefined") return "light";
+  const stored = window.localStorage.getItem("theme") as Theme | null;
+  return stored ?? getSystemTheme();
+}
+
 export default function ThemeToggle({ noBorder }: { noBorder?: boolean }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("theme") as Theme | null;
-    const initial = stored ?? getSystemTheme();
-    setTheme(initial);
-    applyTheme(initial);
-  }, []);
+    applyTheme(theme);
+  }, [theme]);
 
   function toggle() {
     const next: Theme = theme === "dark" ? "light" : "dark";

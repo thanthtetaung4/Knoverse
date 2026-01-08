@@ -203,6 +203,7 @@ def chat(user_message: str, chat_session: str, team_id: str) -> str:
 
     # Invoke the chain to get an answer
     try:
+        # answer = "hello"
         answer = rag_chain.invoke(payload)
     except Exception as e:
         # Bubble up a readable error

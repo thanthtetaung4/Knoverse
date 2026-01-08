@@ -39,7 +39,12 @@ export interface SendMessageProps {
 			const errorText = await response.text();
 			throw new Error(errorText || 'Message send failed');
 		}
-		if (setMessageSend) setMessageSend(true);
+		if (setMessageSend) {
+			console.log("Setting messageSend to true");
+			setMessageSend(true);
+		} else
+			console.log("Setting messageSend is null");
+
 		const json = await response.json();
 		if (!json?.sessionId) throw new Error('Missing sessionId in response');
 		router.push(`/chat/${teamId}/${json.sessionId}`);
@@ -55,12 +60,12 @@ function MainChat() {
 	const [message, setMessage] = useState<string>("");
 	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 	const { accessToken } = useUser();
-	const params = useParams();
-	const teamId = (params as any)?.teamId;
+	const params = useParams<{ teamId: string }>();
+	const teamId = params?.teamId;
 	const [sending, setSending] = useState<boolean>(false);
 	const router = useRouter();
 	const { messageSend, setMessageSend } = useMessageSend();
-
+	console.log("messageSend in main chat: ", messageSend);
 	useEffect(() => {
 		if (textareaRef.current) {
 			textareaRef.current.style.height = 'auto';
@@ -71,7 +76,7 @@ function MainChat() {
 	return (
 		<div className='w-full -mt-30 p-5 flex flex-col'>
 			<div className='my-auto flex flex-col gap-10 justify-center items-center'>
-				<h3 className='text-3xl'>What the fuck u want?</h3>
+				<h3 className='text-3xl'>Hi there how can I help you today?</h3>
 				<div className='border w-1/2 px-3 rounded-full flex items-center'>
 					<textarea
 						ref={textareaRef}

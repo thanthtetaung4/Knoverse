@@ -33,25 +33,25 @@ export default function Home() {
     router.push(`/chat/${teamId}`)
   }
 
-  const fetchTeams = async () => {
-    if (user) {
-      try {
-        const response = await fetch("/api/get/user/teams/?userId=" + user?.id, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        const data = await response.json();
-        setTeams(Array.isArray(data?.teams) ? data.teams : []);
-      } catch (error) {
-        console.error("Error fetching teams:", error);
-      }
-    }
-  };
-
   useEffect(() => {
+    const fetchTeams = async () => {
+      if (user) {
+        try {
+          const response = await fetch("/api/get/user/teams/?userId=" + user?.id, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+          const data = await response.json();
+          setTeams(Array.isArray(data?.teams) ? data.teams : []);
+        } catch (error) {
+          console.error("Error fetching teams:", error);
+        }
+      }
+    };
+
     fetchTeams();
-  }, [user]);
+  }, [user, accessToken]);
   console.log("teams: ", teams)
   return (
     <div className="flex gap-5 h-full">

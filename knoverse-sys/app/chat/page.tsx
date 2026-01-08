@@ -18,7 +18,7 @@ function MainChat() {
 	return (
 		<div className='w-full -mt-30 p-5 flex flex-col'>
 			<div className='my-auto flex flex-col gap-10 justify-center items-center'>
-				<h3 className='text-3xl'>What the fuck u want?</h3>
+				<h3 className='text-3xl'>Hi there how can I help you today?</h3>
 				<div className='border w-1/2 px-3 rounded-full flex items-center'>
 					<textarea
 						ref={textareaRef}
