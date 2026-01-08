@@ -1,28 +1,28 @@
 
 services:
-  frontend:
-    build: ./knoverse-sys
-    ports:
-      - "3000:3000"
-    depends_on:
-      - api
-    env_file:
-      - ./knoverse-sys/.env
-      - ./knoverse-sys/.env.local
+  # frontend:
+  #   build: ./knoverse-sys
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - api
+  #   env_file:
+  #     - ./knoverse-sys/.env
+  #     - ./knoverse-sys/.env.local
 
-  api:
-    build: ./knoverse-ai
-    ports:
-      - "8000:8000"
-    depends_on:
-      - ollama
-    env_file:
-      - ./knoverse-ai/.env
+  # api:
+  #   build: ./knoverse-ai
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - ollama
+  #   env_file:
+  #     - ./knoverse-ai/.env
 
   ollama:
     image: ollama/ollama
     ports:
-      - "11435:11434"
+      - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
 

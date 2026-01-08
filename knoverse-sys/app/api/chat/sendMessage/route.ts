@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
         .values({
           userId: user.id,
           teamId: teamId,
+          lastUpdated: new Date(),
         })
         .returning({ insertedId: chatSessions.id });
       console.log("Insert result:", inserted);
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
       console.log("Created new chat session with id:", newSessionId);
     } catch (error: unknown) {
       return NextResponse.json(
-        { error: "Error creating new chat session" },
+        { error: "Error creating new chat session" + error },
         { status: 500 }
       );
     }
@@ -106,6 +107,15 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       teamId: teamId,
     });
+  } catch (error: unknown) {
+    void error;
+    console.log("Error logging analytics event");
+  }
+
+    try {
+    await db.update(chatSessions).set({
+      lastUpdated: new Date(),
+    }).where(eq(chatSessions.id, newSessionId));
   } catch (error: unknown) {
     void error;
     console.log("Error logging analytics event");

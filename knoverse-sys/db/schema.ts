@@ -110,6 +110,12 @@ export const chatSessions = pgTable('chat_sessions', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
 
+  name: text('session_name'),
+
+  lastUpdated: timestamp('last_updated', {
+    withTimezone: true,
+  }).defaultNow(),
+
   createdAt: timestamp('created_at', {
     withTimezone: true,
   }).defaultNow(),

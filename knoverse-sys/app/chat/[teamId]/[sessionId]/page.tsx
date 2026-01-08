@@ -65,7 +65,7 @@ function MainChat({ sessionId }: { sessionId?: string}) {
 	return (
 		<div className='w-full p-5 flex flex-col'>
 			<div className='overflow-auto h-[90vh] w-full mb-4 px-30'>
-				{messages.map((m) => 
+				{messages.map((m) =>
 					<Message key={ m.id } content={m.content} role={ m.role} />
 				)}
 			</div>

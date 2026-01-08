@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/db";
 import { chatSessions } from "@/db/schema";
-import { eq, asc, and } from "drizzle-orm";
+import { eq, asc, and, desc } from "drizzle-orm";
 import { checkAuth } from "@/lib/auth/checkAuth";
 import { getUser } from "@/lib/supabase/getUser";
 
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(eq(chatSessions.teamId, teamId), eq(chatSessions.userId, user.id))
       )
-      .orderBy(asc(chatSessions.createdAt));
+      .orderBy(desc(chatSessions.lastUpdated));
     return NextResponse.json({ chatSession: session || null });
   } catch (err) {
     console.error("Error fetching chat session:", err);

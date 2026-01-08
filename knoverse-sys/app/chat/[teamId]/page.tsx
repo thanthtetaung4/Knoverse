@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@/app/providers/UserProvider';
 import { IoSend } from "react-icons/io5";
 import { SetStateAction } from 'react';
+import { useMessageSend } from "@/app/providers/MessageSendProvider";
 
 export interface SendMessageProps {
 	sending: boolean;
@@ -14,8 +15,11 @@ export interface SendMessageProps {
 	accessToken: string | null;
 	sessionId?: string;
 	router: ReturnType<typeof useRouter>;
+	setMessageSend?: (value: boolean) => void;
 }
- export async function sendMessage({sending, message, teamId, sessionId, setSending, setMessage, accessToken, router}:SendMessageProps) {
+ export async function sendMessage({sending, message, teamId, sessionId, setSending, setMessage, setMessageSend, accessToken, router}:SendMessageProps) {
+
+
 	if (sending) return;
 	const text = (message ?? "").toString().trim();
 	if (!text) return;
@@ -35,6 +39,7 @@ export interface SendMessageProps {
 			const errorText = await response.text();
 			throw new Error(errorText || 'Message send failed');
 		}
+		if (setMessageSend) setMessageSend(true);
 		const json = await response.json();
 		if (!json?.sessionId) throw new Error('Missing sessionId in response');
 		router.push(`/chat/${teamId}/${json.sessionId}`);
@@ -54,6 +59,7 @@ function MainChat() {
 	const teamId = (params as any)?.teamId;
 	const [sending, setSending] = useState<boolean>(false);
 	const router = useRouter();
+	const { messageSend, setMessageSend } = useMessageSend();
 
 	useEffect(() => {
 		if (textareaRef.current) {
@@ -75,7 +81,7 @@ function MainChat() {
 						rows={1}
 						className='min-h-13 h-auto w-full p-4 resize-none overflow-hidden outline-none focus:outline-none focus:ring-0 focus:border-transparent'
 					/>
-					<IoSend onClick={() => sendMessage({ sending, message, teamId, setSending, setMessage, accessToken, router })} className={`mr-3 ${sending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} size={20}/>
+					<IoSend onClick={() => sendMessage({ sending, message, teamId, setSending, setMessage, setMessageSend, accessToken, router })} className={`mr-3 ${sending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} size={20}/>
 				</div>
 			</div>
 		</div>
