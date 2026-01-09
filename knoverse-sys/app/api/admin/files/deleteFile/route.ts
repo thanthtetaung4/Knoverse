@@ -10,21 +10,17 @@ async function supabaseDeleteFile(fileId: string, filePath: string) {
 	const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY!;
 	const supabase = createClient(supabaseUrl, supabaseKey);
 
-	console.log('Deleting file with fileId:', fileId);
 	const result = await db.delete(teamFiles).where(eq(teamFiles.objectId, fileId));
 	if (result.count === 0) {
 		throw new Error('No team file record found to delete');
 	}
-	console.log('Delete result:', result[0]);
-	console.log('Deleting file from Supabase with fileId:', filePath);
 	const { data, error } = await supabase
 		.storage
 		.from('files')
 		.remove([filePath]);
-	console.log('Supabase delete response data:', data);
 
 	if (error) {
-		console.log('File delete error from Supabase:', error);
+
 		throw error;
 	}
 
@@ -41,12 +37,10 @@ export async function DELETE(request: NextRequest) {
 	const accessToken = authHeader?.replace('Bearer ', '')
 	const { fileId, filePath } = await request.json();
 
-	console.log('Received fileId:', fileId);
 	if (!accessToken) {
 		return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 });
 	}
 
-	console.log(accessToken)
 	// Check authentication
 	const authResult = await checkAuth(accessToken);
 	if (!authResult.success) {
@@ -61,7 +55,6 @@ export async function DELETE(request: NextRequest) {
 	// Upload file to Supabase Storage
 	try {
 		const deleteResponse = await supabaseDeleteFile(fileId, filePath!);
-		console.log('File deleted from Supabase at path:', deleteResponse);
 	} catch (error: unknown) {
 		return NextResponse.json({ error: 'File delete failed', details: error }, { status: 500 });
 	}
@@ -83,7 +76,6 @@ export async function DELETE(request: NextRequest) {
 		}
 
 		const pythonJson = await pythonResp.json().catch(() => ({}));
-		console.log('Python server response:', pythonJson);
 	} catch (error: unknown) {
 		console.error('Error calling python server:', error);
 		return NextResponse.json({ error: 'Failed to call python server', details: String(error) }, { status: 500 });

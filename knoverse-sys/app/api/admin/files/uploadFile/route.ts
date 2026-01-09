@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
   const teamId = formData.get("teamId") as string | null;
 
 
-  console.log("Received file:", file, "teamId:", teamId);
   if (!accessToken) {
     return NextResponse.json(
       { error: "Missing Authorization header" },
@@ -47,7 +46,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log(accessToken);
   // Check authentication
   const authResult = await checkAuth(accessToken);
   if (!authResult.success) {
@@ -57,7 +55,6 @@ export async function POST(request: NextRequest) {
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
-
 
   const newFile = new File(
     [file],
@@ -81,7 +78,6 @@ export async function POST(request: NextRequest) {
     const uploadResponse = await supabaseUploadFile(teamId, newFile);
     filePath = uploadResponse.path;
     fileId = uploadResponse.id;
-    console.log("File uploaded to Supabase at path:", filePath);
   } catch (error: unknown) {
     return NextResponse.json(
       { error: "File upload failed", details: error },
@@ -114,7 +110,6 @@ export async function POST(request: NextRequest) {
     }
 
     const pythonJson = await pythonResp.json().catch(() => ({}));
-    console.log("Python server response:", pythonJson);
   } catch (error: unknown) {
     console.error("Error calling python server:", error);
     return NextResponse.json(
@@ -122,7 +117,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-  console.log("file: ", file.name, ",", file.type, "teamId: ", teamId);
 
   return NextResponse.json({
     message: `File ${filePath} uploaded successfully`,

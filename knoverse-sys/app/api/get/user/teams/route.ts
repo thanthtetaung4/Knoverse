@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
       .select({ teamId: teamMembers.teamId })
       .from(teamMembers)
       .where(eq(teamMembers.userId, userId));
-    console.log("teamIdRows:", teamIdRows);
     const teamIds = teamIdRows.map((r) => r.teamId);
 
     if (teamIds.length === 0) {

@@ -10,10 +10,8 @@ import { eq } from 'drizzle-orm'
  * @returns the DB `users` row or null if not found
  */
 export async function getUser(supabaseUser: User | null | undefined) {
-	console.log('Fetching user for Supabase ID:', supabaseUser);
 	if (!supabaseUser?.id) return null
 
-	console.log('Fetching user for Supabase ID:', supabaseUser.id);
 	const rows = await db.select().from(users).where(eq(users.id, supabaseUser.id))
 	return rows[0] ?? null
 }

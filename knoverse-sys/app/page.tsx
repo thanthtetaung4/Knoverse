@@ -52,7 +52,6 @@ export default function Home() {
 
     fetchTeams();
   }, [user, accessToken]);
-  console.log("teams: ", teams)
   return (
     <div className="flex gap-5 h-full">
       <ProfileTab user={ user} />

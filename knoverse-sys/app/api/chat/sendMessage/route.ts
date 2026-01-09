@@ -50,9 +50,7 @@ export async function POST(request: NextRequest) {
           lastUpdated: new Date(),
         })
         .returning({ insertedId: chatSessions.id });
-      console.log("Insert result:", inserted);
       newSessionId = inserted[0].insertedId;
-      console.log("Created new chat session with id:", newSessionId);
     } catch (error: unknown) {
       return NextResponse.json(
         { error: "Error creating new chat session" + error },
@@ -85,10 +83,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log("Received message:", message, "for sessionId:", newSessionId);
   try {
     const pythonServerBase = process.env.PY_SERVER_URL ?? "";
-    console.log("PY_SERVER_URL:", pythonServerBase);
     if (!pythonServerBase) {
       console.error("PY_SERVER_URL is not set in environment");
       return NextResponse.json(
@@ -97,13 +93,11 @@ export async function POST(request: NextRequest) {
       );
     }
     const pythonEndpoint = `${pythonServerBase.replace(/\/$/, "")}/chat`;
-    console.log("Python endpoint:", pythonEndpoint);
     const pythonResp = await fetch(pythonEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, sessionId: newSessionId, teamId }),
     });
-    console.log("Python server response status:", pythonResp.status);
     if (!pythonResp.ok) {
       const respText = await pythonResp.text().catch(() => "<failed to read body>");
       console.error("Python server returned non-OK:", pythonResp.status, respText);
@@ -128,7 +122,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     void error;
-    console.log("Error logging analytics event");
   }
 
     try {
@@ -137,7 +130,6 @@ export async function POST(request: NextRequest) {
     }).where(eq(chatSessions.id, newSessionId));
   } catch (error: unknown) {
     void error;
-    console.log("Error logging analytics event");
   }
 
   return NextResponse.json({

@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
 	}
 
 	const email = authResult.user.email;
-	console.log("Updating password for email:", email, password);
 
 	if (!email || typeof email !== 'string') {
 		return NextResponse.json({ error: 'Missing or invalid email' }, { status: 400 });

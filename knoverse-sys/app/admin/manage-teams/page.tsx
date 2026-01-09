@@ -51,7 +51,6 @@ export default function ManageTeamsPage() {
 
   const handleAddTeam = async () => {
     try {
-      console.log("Adding team:", newTeam);
       const response = await fetch("/api/admin/teams", {
         method: "POST",
         headers: {

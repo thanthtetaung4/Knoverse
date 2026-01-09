@@ -20,7 +20,6 @@ export async function fetchUserDataFromApi(
   accessToken: string
 ): Promise<ApiUserResponse | null> {
   try {
-    console.log("fetchUserDataFromApi called with accessToken:", accessToken);
     const res = await fetch("/api/get/user", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
@@ -80,16 +79,12 @@ export default function UserProvider({
     if (!session) return;
 
     const handleUser = async () => {
-      console.log("fetching user…");
       const resp = await fetchUserDataFromApi(session.access_token);
-      console.log("resp user:", resp?.user);
       setUser(resp?.user ?? null);
     };
 
     handleUser();
   }, [session]);
-
-  // console.log("session:", session)
 
   return (
     <UserContext.Provider value={{ user, setUser, accessToken: session?.access_token ?? null}}>

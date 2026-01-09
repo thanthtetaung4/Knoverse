@@ -27,8 +27,6 @@ export default function Test() {
 		});
 		if (!res?.ok) {
 			console.error('Fetching Teams failed', await res?.text());
-		} else {
-			console.log('Teams fetched successfully');
 		}
 	}
 
@@ -47,8 +45,6 @@ export default function Test() {
 		});
 		if (!res?.ok){
 			console.error('Creating Teams failed', await res?.text());
-		} else {
-			console.log('Team created successfully');
 		}
 	}
 
@@ -66,8 +62,6 @@ export default function Test() {
 		});
 		if (!res?.ok){
 			console.error('Creating Teams failed', await res?.text());
-		} else {
-			console.log('Team created successfully');
 		}
 	}
 

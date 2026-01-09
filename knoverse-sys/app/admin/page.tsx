@@ -48,7 +48,6 @@ export default function AdminPage() {
     Array<{ teamName: string; userCount: number; activityCount: number }>
   >([]);
   const { accessToken, user } = useUser();
-  console.log("AdminPage user:", user, "accessToken:", accessToken);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -109,7 +108,6 @@ export default function AdminPage() {
       .then((res) => res.json())
       .then((data) => {
         setTotalFiles(data.numberOfFiles);
-        console.log("data.numberOfFiles:", data.numberOfFiles);
       })
       .catch((err) => {
         console.error("Error fetching total files:", err);

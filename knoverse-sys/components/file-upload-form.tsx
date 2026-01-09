@@ -12,13 +12,11 @@ export default function FileUploadForm() {
 
 	const uploadFile = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		console.log("Uploading file...");
 		setIsUploading(true);
 		const formData = new FormData(e.currentTarget);
 		const teamId = formData.get("teamId") as string;
 		const fileUpload = formData.get("fileUpload") as File;
 
-		console.log("teamId:", teamId, "fileUpload:", formData.get("fileUpload"));
 		if (!teamId || !fileUpload) {
 			alert("Please provide both Team ID and a file to upload.");
 			return;
@@ -26,7 +24,6 @@ export default function FileUploadForm() {
 
 		try {
 			const token = await getAccessToken();
-			console.log("Access token:", token);
 			const headers: Record<string, string> = {};
 			if (token) headers['Authorization'] = `Bearer ${token}`;
 

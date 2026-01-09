@@ -53,12 +53,7 @@ export default function ProtectedPage() {
         }
       })
 
-      console.log(session.access_token);
-      console.log(session.user.role)
       const data = await response.json()
-
-      console.log('API response:', data)
-      console.log('API response:', data.userId)
 
       // Use Supabase client for frontend queries (Drizzle is server-only)
       const userData = await fetch('/api/get/user', {
@@ -71,8 +66,6 @@ export default function ProtectedPage() {
       });
 
       const user: UserDB = userData.user || null;
-      console.log('User from DB:', user)
-
       if (!response.ok) {
         setApiError(data.error || 'API request failed')
       } else {

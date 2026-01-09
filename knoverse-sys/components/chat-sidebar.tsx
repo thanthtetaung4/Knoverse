@@ -28,7 +28,6 @@ export function ChatSideBar() {
 	const router = useRouter();
 	const { messageSend, setMessageSend } = useMessageSend();
 
-	console.log("messageSend in sidebar: ", messageSend);
 
 	// Fetch sessions when teamId changes or message is sent
 	useEffect(() => {
@@ -80,12 +79,10 @@ export function ChatSideBar() {
 			try {
 				channel.unsubscribe();
 			} catch {
-				console.log('failed to unsubscribe');
+				// ignore
 			}
 		};
 	}, [teamId, messageSend]);
-	console.log("teamid: ", teamId);
-	console.log("sessions: ", sessions);
 	return <div className='border-r min-w-1/5'>
 			<h3 className='font-semibold text-xl border-b p-5'>Recent Chats</h3>
 				<div className="flex w-full justify-between px-3 py-2" >

@@ -86,14 +86,12 @@ export async function POST(request: NextRequest) {
     let authUser;
     let password: string | undefined = undefined;
     try {
-      console.log("Creating user with email:", email);
       password = Math.random().toString(36).slice(-8);
       const supabase = await createClient();
       authUser = await supabase.auth.signUp({
         email: email,
         password: password,
       });
-      console.log("authUser", authUser);
       if (!authUser.data.user) {
         return NextResponse.json(
           { error: "User Creation Failed" },
@@ -205,14 +203,7 @@ export async function DELETE(request: NextRequest) {
       serviceRoleKey
     );
 
-    console.log("Attempting Supabase auth delete for ID:", userId);
     const deleteRes = await supabase.auth.admin.deleteUser(userId);
-    console.log(
-      "Supabase deleteUser response data:",
-      deleteRes.data,
-      "error:",
-      deleteRes.error
-    );
 
     if (deleteRes.error) {
       // If Supabase returns an error, do not proceed to remove DB row

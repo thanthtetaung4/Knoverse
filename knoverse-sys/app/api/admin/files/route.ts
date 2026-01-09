@@ -37,9 +37,7 @@ export async function GET(request: NextRequest) {
   }
 	try {
 		// Join team_files with storage.objects to return friendly file data
-		console.log("Fetching files for teamId:", teamId);
 		const rows = await db.select({ file: objects.name, id: objects.id, createdAt: objects.createdAt }).from(objects).leftJoin(teamFiles, eq(objects.id, teamFiles.objectId)).where(eq(teamFiles.teamId, teamId));
-		console.log("Retrieved files:", rows);
 
 		return NextResponse.json({ rows });
 	} catch (error) {

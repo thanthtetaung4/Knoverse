@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  console.log(accessToken);
   // Check authentication
   const authResult = await checkAuth(accessToken);
   if (!authResult.success) {

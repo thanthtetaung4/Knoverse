@@ -58,7 +58,6 @@ export default function ManageUserPage() {
           file: string;
           createdAt: string;
         }>;
-		console.log("Fetched files:", rows);
         setFiles(
           rows.map((r) => ({
             id: String(r.id),

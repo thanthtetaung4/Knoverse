@@ -19,8 +19,6 @@ export default function fileDeletePage() {
 		});
 		if (!res?.ok) {
 			console.error('File delete failed', await res?.text());
-		} else {
-			console.log('File deleted successfully');
 		}
 		alert('File delete request sent. Check console for details.');
 	}

@@ -40,10 +40,8 @@ export interface SendMessageProps {
 			throw new Error(errorText || 'Message send failed');
 		}
 		if (setMessageSend) {
-			console.log("Setting messageSend to true");
 			setMessageSend(true);
-		} else
-			console.log("Setting messageSend is null");
+		}
 
 		const json = await response.json();
 		if (!json?.sessionId) throw new Error('Missing sessionId in response');
@@ -64,8 +62,7 @@ function MainChat() {
 	const teamId = params?.teamId;
 	const [sending, setSending] = useState<boolean>(false);
 	const router = useRouter();
-	const { messageSend, setMessageSend } = useMessageSend();
-	console.log("messageSend in main chat: ", messageSend);
+	const { setMessageSend } = useMessageSend();
 	useEffect(() => {
 		if (textareaRef.current) {
 			textareaRef.current.style.height = 'auto';

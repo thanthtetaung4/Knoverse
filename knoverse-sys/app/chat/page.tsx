@@ -39,8 +39,6 @@ export default function ChatPage() {
   const [loading, setLoading] = useState<boolean>(false);
 
   const { accessToken } = useUser();
-  // const {user} = useUser()
-  // console.log("user: ", user)
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);

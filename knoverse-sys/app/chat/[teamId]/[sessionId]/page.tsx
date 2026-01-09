@@ -69,7 +69,6 @@ function MainChat({ sessionId }: { sessionId?: string}) {
 			try { chanRef?.unsubscribe(); } catch {}
 		};
 	}, [sessionId, accessToken]);
-	console.log(messages)
 	return (
 		<div className='w-full p-5 flex flex-col'>
 			<div className='overflow-auto h-[90vh] w-full mb-4 px-30'>
