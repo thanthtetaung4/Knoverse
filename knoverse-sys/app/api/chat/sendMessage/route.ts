@@ -88,16 +88,35 @@ export async function POST(request: NextRequest) {
   console.log("Received message:", message, "for sessionId:", newSessionId);
   try {
     const pythonServerBase = process.env.PY_SERVER_URL ?? "";
+    console.log("PY_SERVER_URL:", pythonServerBase);
+    if (!pythonServerBase) {
+      console.error("PY_SERVER_URL is not set in environment");
+      return NextResponse.json(
+        { error: "Backend misconfiguration: PY_SERVER_URL not set" },
+        { status: 500 }
+      );
+    }
     const pythonEndpoint = `${pythonServerBase.replace(/\/$/, "")}/chat`;
+    console.log("Python endpoint:", pythonEndpoint);
     const pythonResp = await fetch(pythonEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, sessionId: newSessionId, teamId }),
     });
     console.log("Python server response status:", pythonResp.status);
+    if (!pythonResp.ok) {
+      const respText = await pythonResp.text().catch(() => "<failed to read body>");
+      console.error("Python server returned non-OK:", pythonResp.status, respText);
+      return NextResponse.json(
+        { error: "Python server returned non-OK response", status: pythonResp.status, body: respText },
+        { status: 502 }
+      );
+    }
   } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.stack ?? error.message : String(error);
+    console.error("Error sending message to Python server:", errMsg);
     return NextResponse.json(
-      { error: "Error sending message to Python server", details: error },
+      { error: "Error sending message to Python server", details: errMsg },
       { status: 500 }
     );
   }

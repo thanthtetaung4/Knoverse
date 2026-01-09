@@ -1,4 +1,4 @@
-import os
+import os, requests
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
@@ -58,7 +58,7 @@ def create_rag_chain(team_id: str):
     PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "knoverse-index")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "nomic-embed-text")
     OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "gemma3:1b")
-    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "ollama:11434")
 
     PROMPT_TEMPLATE = """You are a helpful assistant for Q&A over PDFs.
 You must use the context and recent chat history to answer.
@@ -117,7 +117,7 @@ def session_name_gen(user_message: str) -> str:
     """
     load_dotenv()
     OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "gemma3:1b")
-    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "ollama:11434")
 
     try:
         from langchain_community.llms import Ollama
@@ -148,6 +148,30 @@ Title:"""
     fallback = user_message.strip().splitlines()[0][:50].strip()
     return fallback if fallback else "New Chat"
 
+def ensure_ollama_model(model: str):
+    
+    print(model)
+    load_dotenv()
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "ollama:11434")
+    # Check installed models
+    tags = requests.get(f"{OLLAMA_BASE_URL}/api/tags").json().get("models", [])
+    print(tags)
+    installed = {m["name"] for m in tags}
+    # print(requests.get(f"{OLLAMA_BASE_URL}").json())
+    
+    if model in installed:
+        return
+
+    print(f"📥 Pulling Ollama model: {model}")
+    r = requests.post(
+        f"{OLLAMA_BASE_URL}/api/pull",
+        json={"name": model},
+        # stream=True,
+        timeout=None,
+    )
+    r.raise_for_status()
+    print(f"{OLLAMA_BASE_URL}/api/pull")
+    print(r.status_code)
 
 def chat(user_message: str, chat_session: str, team_id: str) -> str:
     """Main chat entrypoint.
@@ -157,6 +181,12 @@ def chat(user_message: str, chat_session: str, team_id: str) -> str:
     - Returns the assistant's answer as a string
     """
     load_dotenv()
+    
+    OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
+    OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "gemma3:1b")
+
+    ensure_ollama_model(OLLAMA_EMBEDDING_MODEL)
+    ensure_ollama_model(OLLAMA_LLM_MODEL)
 
     url: str = os.getenv("SUPABASE_URL", "").strip()
     key: str = os.getenv("SUPABASE_KEY")
