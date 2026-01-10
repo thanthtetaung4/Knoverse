@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUser } from "@/app/providers/UserProvider";
+import { Spinner } from "@/components/ui/spinner";
+import { is } from "drizzle-orm";
 
 type UserRow = {
   id: string | number;
@@ -31,61 +33,9 @@ type UserRow = {
   date: string;
 };
 
-const initialData: UserRow[] = [
-  {
-    id: 1,
-    mail: "john.doe@example.com",
-    username: "John Doe",
-    row: "Admin",
-    date: "2024-01-15",
-  },
-  {
-    id: 2,
-    mail: "jane.smith@example.com",
-    username: "Jane Smith",
-    row: "User",
-    date: "2024-02-20",
-  },
-  {
-    id: 4,
-    mail: "alice.jones@example.com",
-    username: "Alice Jones",
-    row: "User",
-    date: "2024-04-05",
-  },
-  {
-    id: 5,
-    mail: "charlie.brown@example.com",
-    username: "Charlie Brown",
-    row: "Admin",
-    date: "2024-05-12",
-  },
-  {
-    id: 7,
-    mail: "emma.davis@example.com",
-    username: "Emma Davis",
-    row: "User",
-    date: "2024-07-22",
-  },
-  {
-    id: 8,
-    mail: "frank.miller@example.com",
-    username: "Frank Miller",
-    row: "User",
-    date: "2024-08-30",
-  },
-  {
-    id: 10,
-    mail: "henry.white@example.com",
-    username: "Henry White",
-    row: "Admin",
-    date: "2024-10-25",
-  },
-];
-
 export default function ManageUserPage() {
   const pageSize = 8;
-  const [datas, setDatas] = React.useState<UserRow[]>(initialData as UserRow[]);
+  const [datas, setDatas] = React.useState<UserRow[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [page, setPage] = React.useState(1);
@@ -105,6 +55,11 @@ export default function ManageUserPage() {
   } | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [showResetDialog, setShowResetDialog] = React.useState(false);
+  const [isDoing, setIsDoing] = React.useState(false);
+  const [resetPassword, setResetPassword] = React.useState<{
+    password: string;
+  } | null>(null);
 
   // get current access token from provider to authenticate API calls
   const { accessToken } = useUser();
@@ -333,6 +288,46 @@ export default function ManageUserPage() {
     })();
   };
 
+  const handleResetPassword = (userId: string | number) => {
+    if (!accessToken) {
+      alert("You must be signed in to reset passwords");
+      return;
+    }
+    console.log("Initiating password reset for userId:", userId);
+    (async () => {
+      setIsDoing(true);
+      try {
+        const res = await fetch("/api/admin/users/reset-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ userId }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          console.error("Failed to reset password", json);
+          alert(json.error || "Failed to reset password");
+          setIsDoing(false);
+          return;
+        }
+
+        const returnedPassword = json.password ?? "";
+        setResetPassword({
+          password: returnedPassword,
+        });
+
+        setIsDoing(false);
+        setShowResetDialog(true);
+      } catch (err) {
+        setIsDoing(false);
+        console.error("Error resetting password", err);
+        alert("Failed to reset password");
+      }
+    })();
+  };
+
   return (
     <div>
       <div className="mb-8">
@@ -435,6 +430,35 @@ export default function ManageUserPage() {
                   <td className="p-4">{u.username}</td>
                   <td className="p-4">{u.row}</td>
                   <td className="p-4 text-right">{u.date}</td>
+                  <td className="p-4 flex justify-center">
+                    <Button
+                      variant="outline"
+                      className="group flex items-center gap-2 text-foreground"
+                      onClick={() => handleResetPassword(u.id)}
+                      disabled={isDoing}
+                    >
+                      {!isDoing ? (
+                        <>
+                          <svg
+                            className="h-4 w-4 group-hover:text-blue-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v2h8z"
+                            />
+                          </svg>
+                          <span>Reset Password</span>
+                        </>
+                      ) : (
+                        <Spinner></Spinner>
+                      )}
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -579,6 +603,29 @@ export default function ManageUserPage() {
             </Button>
             <Button variant="destructive" onClick={handleDeleteUsers}>
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Password Reset Successfully</DialogTitle>
+            <DialogDescription>
+              Password has been reset. Copy the new credentials below and share
+              with the user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Password</Label>
+              <Input value={resetPassword?.password ?? ""} readOnly />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResetDialog(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
