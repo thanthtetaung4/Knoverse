@@ -54,8 +54,8 @@ export default function TeamManageCard({
       </CardHeader>
       <CardContent>
         <p>{description}</p>
-      </CardContent>
-      <CardAction>
+      </CardContent>  
+      <CardAction className="flex justify-center gap-2 pl-4">
         <Button
           variant="outline"
           className="group flex items-center gap-2 text-foreground"
