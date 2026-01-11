@@ -306,8 +306,8 @@ export default function ManageUserPage() {
   return (
     <div>
        <HeaderCard
-          title="Manage Users"
-          description="Manage your teams and their account permissions here."
+          title="Manage Team Members"
+          description="Manage your team members here."
       />
 
       <div className="mb-4 flex justify-end gap-3">
