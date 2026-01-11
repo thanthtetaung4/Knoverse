@@ -24,6 +24,7 @@ import {
 import { useUser } from "@/app/providers/UserProvider";
 import { useParams } from "next/navigation";
 import { UserDB } from "@/db/schema";
+import HeaderCard from "@/components/dashboard-header-card";
 type UserRow = {
   id: string | number;
   mail: string;
@@ -304,13 +305,10 @@ export default function ManageUserPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-4xl font-sans font-bold">Manage Users</h1>
-        <p className="mt-2">
-          Manage your team members and their account permissions here.
-        </p>
-        <Separator className="my-4" />
-      </div>
+       <HeaderCard
+          title="Manage Users"
+          description="Manage your teams and their account permissions here."
+      />
 
       <div className="mb-4 flex justify-end gap-3">
         <div className="flex-1 max-w-sm">

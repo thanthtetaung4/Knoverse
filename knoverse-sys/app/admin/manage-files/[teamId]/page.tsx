@@ -15,6 +15,7 @@ import {
 // removed unused form/ui imports
 import { useUser } from "@/app/providers/UserProvider";
 import { useParams } from "next/navigation";
+import HeaderCard from "@/components/dashboard-header-card";
 
 type FileRow = {
   id: string; // team_files.id
@@ -175,11 +176,9 @@ export default function ManageUserPage() {
   };
     return (
       <div>
-        <div className="mb-8">
-          <h1 className="text-4xl font-sans font-bold">Manage Files</h1>
-          <p className="mt-2">Files for team {teamId}</p>
-          <Separator className="my-4" />
-        </div>
+        <HeaderCard 
+        title="Manage Files" description={"Files for team " + teamId}
+        />
 
         <div className="mb-4 flex justify-between items-center gap-3">
           <form onSubmit={handleUpload} className="flex items-center gap-2">

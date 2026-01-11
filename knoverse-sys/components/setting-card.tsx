@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { useUser } from '@/app/providers/UserProvider';
 
-export default function SettingsPageCard() {
+export default function 	SettingsPageCard() {
 	const [loading, setLoading] = useState(false);
 	const [message, setMessage] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -35,20 +35,25 @@ export default function SettingsPageCard() {
 	};
 
 	return (
-		<div className="flex flex-col gap-2">
-			<label className="text-sm">New Password</label>
-			<input
+		<div className="flex justify-center">
+			<div className="flex flex-col gap-8 items-center my-32 p-20 border border-2 rounded-sm sm:max-w-1/3 md:max-w-2/3">
+			<label className="text-md font-semibold">New Password</label>
+				<input
 				type="text"
 				value={password}
 				onChange={(e) => setPassword(e.target.value)}
 				placeholder="New Password"
-				className="px-3 py-2 border rounded"
-			/>
-			<Button onClick={handlePwdChange} disabled={loading || !password}>
-				{loading ? 'Sending…' : 'Send Password Reset Email'}
-			</Button>
-			{message && <p className="text-sm text-green-600">{message}</p>}
+				className="px-3 py-2 border rounded "
+				/>
+			<div className='mt-8'>
+				<Button onClick={handlePwdChange} disabled={loading || !password}>
+					{loading ? 'Sending…' : 'Send Password Reset Email'}
+				</Button>
+			</div>
+			
+			{message && <p className="text-sm text-green-600">{message} </p>}
 			{error && <p className="text-sm text-red-600">{error}</p>}
-		</div>
+			</div>
+		</div>	
 	);
 }
