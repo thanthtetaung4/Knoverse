@@ -15,12 +15,14 @@ type TeamManageCardProps = {
   title: string;
   description: string;
   teamId: string;
+  setTeamDeleted: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export default function TeamManageCard({
   title,
   description,
   teamId,
+  setTeamDeleted,
 }: TeamManageCardProps) {
   const { accessToken } = useUser();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -45,6 +47,7 @@ export default function TeamManageCard({
     } catch (error) {
       console.error("Error deleting user:", error);
     }
+    setTeamDeleted(true);
     setIsDeleting(false);
   };
   return (
@@ -54,7 +57,7 @@ export default function TeamManageCard({
       </CardHeader>
       <CardContent>
         <p>{description}</p>
-      </CardContent>  
+      </CardContent>
       <CardAction className="flex justify-center gap-2 pl-4">
         <Button
           variant="outline"

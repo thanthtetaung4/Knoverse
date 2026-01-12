@@ -1,9 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAuth } from "@/lib/auth/checkAuth";
-import { teams } from "@/db/schema";
+import { objects, teamFiles, teams } from "@/db/schema";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import checkUserRole from "@/lib/checkUserRole";
+
+async function deleteTeamFiles(teamId: string, accessToken: string, baseUrl: string) {
+  const files = await db
+    .select({ objectId: teamFiles.objectId, name: objects.name })
+    .from(teamFiles)
+    .innerJoin(objects, eq(objects.id, teamFiles.objectId))
+    .where(eq(teamFiles.teamId, teamId));
+
+  if (files.length === 0) return;
+
+  console.log(
+    "Deleting files for team:",
+    teamId,
+    "Count:",
+    files.length,
+    "Files:",
+    files
+  );
+
+  for (const file of files) {
+    try {
+      const deleteEndpoint = new URL("/api/admin/files/deleteFile", baseUrl).toString();
+      const response = await fetch(deleteEndpoint, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          fileId: file.objectId,
+          filePath: file.name,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        console.error(`Failed to delete file ${file.objectId}:`, text);
+        throw new Error(`Failed to delete file ${file.objectId}`);
+      }
+
+      console.log("Successfully deleted file:", file.objectId);
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      throw error;
+    }
+  }
+}
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get("Authorization");
@@ -83,15 +130,18 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const result = await db.delete(teams).where(eq(teams.id, teamId));
-    if (result.count === 0) {
-      return NextResponse.json(
-        { error: "No team found to delete" },
-        { status: 404 }
-      );
-    }
+    const baseUrl = request.nextUrl.origin;
+    await deleteTeamFiles(teamId, accessToken, baseUrl);
+
+    console.log("Attempting to delete team with ID:", teamId);
+    const result = await db
+      .delete(teams)
+      .where(eq(teams.id, teamId))
+      .returning();
+    console.log("Delete result:", result);
     return NextResponse.json({ message: "Team deleted successfully" });
   } catch (error: unknown) {
+    console.error("Error deleting team:", error);
     return NextResponse.json(
       { error: "Team deletion failed", details: error },
       { status: 500 }

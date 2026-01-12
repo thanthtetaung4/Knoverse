@@ -4,7 +4,14 @@ import HeaderCard from "@/components/dashboard-header-card";
 import TeamManageCard from "@/components/team-manage-card";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -27,6 +34,7 @@ export default function ManageTeamsPage() {
   const { accessToken } = useUser();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newTeam, setNewTeam] = useState({ name: "", description: "" });
+  const [teamDeleted, setTeamDeleted] = useState(false);
 
   const fetchTeams = async () => {
     setIsLoading(true);
@@ -47,7 +55,8 @@ export default function ManageTeamsPage() {
 
   useEffect(() => {
     fetchTeams();
-  }, []);
+    setTeamDeleted(false);
+  }, [teamDeleted]);
 
   const handleAddTeam = async () => {
     try {
@@ -57,7 +66,10 @@ export default function ManageTeamsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ teamName: newTeam.name, description: newTeam.description }),
+        body: JSON.stringify({
+          teamName: newTeam.name,
+          description: newTeam.description,
+        }),
       });
       if (response.ok) {
         setShowAddDialog(false);
@@ -69,7 +81,7 @@ export default function ManageTeamsPage() {
     } catch (error) {
       console.error("Error adding team:", error);
     }
-  }
+  };
 
   return (
     <>
@@ -97,7 +109,8 @@ export default function ManageTeamsPage() {
             />
           </svg>
           <span>Add Team</span>
-        </Button></div>
+        </Button>
+      </div>
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {isLoading ? (
           <p>Loading teams...</p>
@@ -108,6 +121,7 @@ export default function ManageTeamsPage() {
               title={team.name}
               description={team.description}
               teamId={team.id}
+              setTeamDeleted={setTeamDeleted}
             />
           ))
         )}
