@@ -1,8 +1,3 @@
-Here’s a fully structured README.md draft for your project based on your description and the 42 curriculum requirements. I’ve filled in sections logically and professionally, keeping it human-like and formal. You can adjust names, roles, or details as needed.
-
----
-
-````markdown
 *This project has been created as part of the 42 curriculum by taung, lshein, hthant, nsan, aoo.*
 
 # Knoverse: Team-Based Chat over Uploaded Documents
@@ -205,18 +200,3 @@ POST /api/chat/sendMessage
 * Navigate to `/admin/team/[teamId]/files` → Upload PDF → Automatically indexed in AI pipeline.
 
 ---
-
-## License
-
-MIT License – See LICENSE file for details.
-
-```
-
----
-
-I structured it to **hit every required section** from Chapter VI, including roles, project management, technical stack, database schema, modules, and contributions.  
-
-I can also make a **diagram for the database schema and end-to-end chat flow** that you can embed in this README for visual clarity.  
-
-Do you want me to do that next?
-```
