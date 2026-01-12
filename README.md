@@ -19,8 +19,6 @@ The system is implemented in two integrated runtimes:
 1. **knoverse-sys (TypeScript / Next.js)** – Handles UI, team management, chat, and API endpoints.
 2. **knoverse-ai (Python)** – Handles PDF indexing, retrieval, and generation of AI-assisted responses using a RAG (Retrieval-Augmented Generation) pipeline.
 
----
-
 ## Instructions
 
 ### Prerequisites
@@ -36,7 +34,6 @@ The system is implemented in two integrated runtimes:
   SUPABASE_SERVICE_KEY=<your-service-key>
   PINECONE_API_KEY=<your-pinecone-key>
   PINECONE_ENV=<pinecone-environment>
-````
 
 ### Web App Setup (knoverse-sys)
 
