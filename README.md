@@ -1,199 +1,327 @@
-*This project has been created as part of the 42 curriculum by taung, lshein, hthant, nsan, aoo.*
+*This project has been created as part of the 42 curriculum by taung, lshein, hthant, aoo, nsan.*
 
-# Knoverse: Team-Based Chat over Uploaded Documents
+# Knoverse (Knowledge Universe)
 
 ## Description
 
-**Project Name:** Knoverse  
+**Knoverse** is an AI-backed collaborative chat platform designed for organizations and teams to interact intelligently with their internal knowledge base.  
+It enables users to ask natural-language questions about their team’s uploaded documents and receive accurate, contextual answers powered by a Retrieval-Augmented Generation (RAG) system.
 
-Knoverse is a collaborative platform that allows teams to chat and interact over uploaded documents. It combines a web interface for team collaboration with an AI-powered document retrieval and Q&A system.  
+The platform also provides administrators with full control over teams, users, permissions, and activity analytics, allowing organizations to understand engagement and knowledge usage across teams.
 
-**Key Features:**
-- Team management: create, edit, and manage multiple teams and their members.
-- Document upload: PDFs and other files can be uploaded per team.
-- Chat interface: team members can discuss topics and ask questions within a chat interface.
-- AI-powered retrieval: uploaded documents are indexed and queried using a vector database to answer questions contextually.
-- Role-based access control: team membership governs access to messages and documents.
+### Key Goals
+- Centralize team knowledge into a searchable, conversational interface
+- Enable secure, team-scoped AI document querying
+- Provide administrators with visibility and control over organizational activity
+- Demonstrate a full modern web stack with AI integration, containerization, and modular architecture
 
-The system is implemented in two integrated runtimes:
-1. **knoverse-sys (TypeScript / Next.js)** – Handles UI, team management, chat, and API endpoints.
-2. **knoverse-ai (Python)** – Handles PDF indexing, retrieval, and generation of AI-assisted responses using a RAG (Retrieval-Augmented Generation) pipeline.
+---
+
+## Key Features
+
+### Core Features
+- **AI-Powered Team Chat**
+  - Ask questions about uploaded team documents
+  - Context-aware answers using vector via `team_id` query
+  - Conversation history preserved per team and session
+
+- **Retrieval-Augmented Generation (RAG)**
+  - PDF ingestion, chunking, embedding, and indexing
+  - Semantic retrieval via Pinecone
+  - LLM-based response generation using Ollama (Gemma 3)
+
+- **Team-Based Access Control**
+  - Strict isolation of data by team
+  - Users can only query documents belonging to their teams
+  - Role-based permissions (admin / organizer / member)
+
+- **Admin Dashboard**
+  - Team and user management
+  - View activity statistics (most active teams, usage patterns)
+  - File management and visibility into indexed documents
+
+### Additional Features
+- Server-Side Rendering (SSR) for improved performance
+- ORM-based database access using Drizzle
+- File upload and management system
+- Dockerized full-stack deployment (frontend, backend, AI services)
+- Modular microservice-style AI backend
+
+---
+
+## Project Architecture
+
+Knoverse is composed of **two main runtimes**, fully containerized and orchestrated with Docker:
+
+### 1. knoverse-sys (Web Application)
+- **Frontend:** React + Next.js
+- **Backend:** Next.js API routes (Node.js)
+- **Authentication & Database:** Supabase
+- **ORM:** Drizzle
+- **Styling:** TailwindCSS
+
+Responsibilities:
+- UI rendering
+- Authentication & authorization
+- Team, user, and file management
+- Chat session handling
+- Communication with AI service
+
+### 2. knoverse-ai (AI Service)
+- **Language:** Python
+- **LLM:** Ollama (Gemma 3)
+- **Vector Database:** Pinecone
+
+Responsibilities:
+- PDF processing and chunking
+- Vector embedding and indexing
+- Semantic retrieval
+- LLM prompt construction and response generation
+
+### High-Level Flow
+1. User sends a message from the web UI
+2. Backend validates user and team membership
+3. Relevant document chunks are retrieved from Pinecone
+4. Chat hostory is retrieved from Supabase
+5. AI service generates a response using retrieved context
+6. Response is stored on the Supabase
+7. The chat is updated on UI via Websocket
+
+---
 
 ## Instructions
 
 ### Prerequisites
-- Node.js v20+  
-- pnpm or npm  
-- Python 3.11+  
-- Supabase account (for authentication and database)  
-- Pinecone account (for vector database storage)  
-- .env file with configuration:
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
-  NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
-  SUPABASE_SERVICE_KEY=<your-service-key>
-  PINECONE_API_KEY=<your-pinecone-key>
-  PINECONE_ENV=<pinecone-environment>
+- Docker **v24+**
+- Docker Compose **v2+**
+- Git
 
-### Web App Setup (knoverse-sys)
-
-1. Install dependencies:
-
-   ```bash
-   pnpm install
-   ```
-2. Start the development server:
-
-   ```bash
-   pnpm dev
-   ```
-3. Access the app at [http://localhost:3000](http://localhost:3000)
-
-### AI Tools Setup (knoverse-ai)
-
-1. Create and activate a Python virtual environment:
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate
-   ```
-2. Install dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Index documents into Pinecone:
-
-   ```bash
-   python index_pdfs.py
-   ```
-4. Test query pipeline:
-
-   ```bash
-   python ask_pdf.py
-   ```
+No local Node.js or Python installation is required for execution.
 
 ---
 
-## Resources
+### Environment Configuration
 
-* [Next.js Documentation](https://nextjs.org/docs) – Frontend framework reference.
-* [Supabase Docs](https://supabase.com/docs) – Authentication and database management.
-* [Drizzle ORM](https://orm.drizzle.team/) – Database schema and migrations.
-* [Pinecone Docs](https://docs.pinecone.io/) – Vector database for embeddings.
-* AI Usage:
+This project requires **three environment files**:
 
-  * PDF chunking, embedding, and storage in Pinecone.
-  * Querying and generating contextual responses in team chat.
+#### 1. `knoverse-sys/.env`
+```env
+SUPABASE_URL=...
+SUPABASE_SERVICE_KEY=...
+```
+
+#### 2. `knoverse-sys/.env.local`
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+#### 3. `knoverse-ai/.env`
+
+```env
+PINECONE_API_KEY=...
+PINECONE_ENVIRONMENT=...
+OLLAMA_BASE_URL=...
+```
 
 ---
 
-## Team Information
+### Running the Project (Fully Working, AI Included)
 
-| Member   | Role                      | Responsibilities                                      |
-| -------- | ------------------------- | ----------------------------------------------------- |
-| <login1> | Product Owner / Tech Lead | Project vision, backend architecture, AI integration. |
-| <login2> | Developer                 | Frontend UI pages, chat flow, API endpoints.          |
-| <login3> | Developer                 | PDF indexing, Pinecone integration, RAG pipeline.     |
+1. Clone the repository:
 
----
+```bash
+git clone https://github.com/your-repo/knoverse.git
+cd knoverse
+```
 
-## Project Management
+2. Build and start all services:
 
-* Task distribution: Trello board with categorized cards (Frontend, Backend, AI, QA).
-* Meetings: Twice weekly Zoom syncs, ad-hoc via Discord.
-* Communication channels: Discord server for daily updates, Slack for urgent issues.
-* Version control: GitHub repository with feature branches and pull requests.
+```bash
+docker compose up --build
+```
+
+3. Access the application:
+
+* Web App: `http://localhost:3000`
+* AI services are internally networked via Docker
 
 ---
 
 ## Technical Stack
 
-* **Frontend:** Next.js 14, TypeScript, React 18, TailwindCSS
-* **Backend:** Next.js API routes, TypeScript, Supabase auth/session
-* **Database:** Supabase/PostgreSQL with Drizzle ORM
-* **AI/ML:** Python 3.11, OpenAI LLM, Pinecone vector DB, LangChain-style RAG pipeline
-* **Justification:**
+### Frontend
 
-  * Next.js provides full-stack capabilities, server-side rendering, and app routing.
-  * Supabase simplifies authentication, database access, and real-time features.
-  * Pinecone enables scalable vector search for document retrieval.
+* React
+* Next.js
+* TypeScript
+* TailwindCSS
 
----
+### Backend
 
-## Database Schema
+* Node.js (Next.js API routes)
+* Supabase (Auth + PostgreSQL)
+* Drizzle ORM
 
-**Key Tables (Drizzle ORM):**
+### AI & Data
 
-* `teams` – id, name, description
-* `team_members` – user_id, team_id, role
-* `team_files` – id, team_id, filename, metadata
-* `chat_sessions` – id, team_id, session_id
-* `chat_messages` – id, session_id, user_id, message, created_at
+* Python
+* Ollama (Gemma 3 model)
+* Pinecone Vector Database
 
-**Relationships:**
+### Infrastructure
 
-* One team → many members
-* One team → many files
-* One session → many messages
+* Docker
+* Docker Compose
+* Microservice-oriented architecture
 
-*All operations are scoped by `teamId` to ensure isolation between teams.*
+**Justification:**
+This stack provides strong type safety, scalability, SSR support, secure authentication, and a production-grade AI pipeline while remaining maintainable and modular.
 
 ---
 
-## Features List
+## Database Schema (Overview)
 
-| Feature                  | Implemented By     | Description                                                    |
-| ------------------------ | ------------------ | -------------------------------------------------------------- |
-| Team selection           | <login1>, <login2> | UI page to view and select teams.                              |
-| Team chat                | <login2>           | Chat interface with real-time messaging and AI answers.        |
-| File upload & management | <login3>           | Admin pages to upload PDFs and manage team files.              |
-| PDF indexing             | <login3>           | Splits PDF into chunks, embeds into Pinecone with metadata.    |
-| AI Q&A                   | <login3>           | Retrieves relevant chunks and prompts LLM to generate answers. |
-| Authentication           | <login1>           | Supabase auth integration for sessions and permissions.        |
+* **users** – authenticated users
+* **teams** – organizational units
+* **team_members** – user-to-team relationships with roles
+* **team_files** – uploaded documents per team
+* **chat_sessions** – conversation threads
+* **chat_messages** – user and AI messages
+
+All context data access is strictly scoped by `team_id` to prevent cross-team leakage.
+All data is strictly scoped by `user_role` and only `admin` can CRUD the user data.
+
+## Storage Bucket
+* **files** - stores all the files for teams
 
 ---
 
 ## Modules
 
-| Module          | Type  | Points | Description                                                  |
-| --------------- | ----- | ------ | ------------------------------------------------------------ |
-| Chat API        | Major | 2      | Endpoint for sending/receiving messages with AI integration. |
-| PDF Indexing    | Major | 2      | Converts PDFs to embeddings and stores them in Pinecone.     |
-| Team Management | Minor | 1      | Admin pages for managing teams, members, and files.          |
-| Frontend UI     | Major | 2      | Next.js pages and chat interface.                            |
+### Major Modules (2 points each)
+
+1. **Full-Stack Framework (Frontend + Backend)**
+
+   * Next.js used for both UI and server logic
+
+2. **Real-Time Capable Chat System**
+
+   * Session-based messaging with persistent history
+
+3. **Advanced Permission & Organization System**
+
+   * Team-scoped access control and role management
+
+4. **Complete RAG System**
+
+   * PDF ingestion → embeddings → vector retrieval → LLM answers
+
+5. **LLM System Interface**
+
+   * Ollama-powered local model inference
+
+6. **Backend as Microservices**
+
+   * AI runtime decoupled from web backend
+
+7. **Custom Major Module: Team-Scoped AI Knowledge Engine**
+
+   * **Why:** Core problem of secure, contextual organizational knowledge access
+   * **Challenges:** Isolation, embedding consistency, retrieval accuracy, latency
+   * **Value:** Turns static documents into an interactive knowledge system
+   * **Justification:** High technical complexity, deep AI integration, central to project
+
+---
+
+### Minor Modules (1 point each)
+
+* ORM integration (Drizzle)
+* Server-Side Rendering (SSR)
+* File upload and management
+* User authentication and management
+* Activity analytics dashboard
+* Cross-browser compatibility
+* Reusable components
+* Advanced search and pagination tables
+* User activity analytics dashboard
 
 ---
 
 ## Individual Contributions
 
-* **<login1>**: System architecture, backend API, authentication flow, team permissions
-* **<login2>**: Frontend pages (chat UI, team selection, admin UI), integration with chat API
-* **<login3>**: AI pipeline, PDF indexing, Pinecone vector DB integration, query scripts
+* **taung -  Teach Lead**
 
-**Challenges faced:**
+	* Designed and implemented the AI pipeline
+	* Built the complete RAG system (PDF ingestion, embedding, retrieval)
+	* Integrated Pinecone and Ollama into the backend workflow
+	* Led technical decision-making across frontend, backend, and AI services
+	* Ensured clean service separation, scalability, and code quality	
 
-* Ensuring team-based isolation for AI retrieval.
-* Handling large PDF indexing efficiently.
-* Synchronizing chat UI with backend and AI responses in real-time.
+* **nsan - Project Manager**
+	* Designed database schema and data relationships
+	* Implemented ORM integration using Drizzle
+	* Developed analytics and reporting features
+	* Coordinated task distribution and milestone tracking
+
+* **aoo - Product Owner**
+	* Defined feature scope and project direction
+	* Defined overall system architecture
+	* Coordinated deployment workflow and runtime integration
+	* Ensured alignment with evaluation requirements
+
+* **hthant - Developer**
+	* Built frontend UI and layout system
+	* Implemented chat interface and admin dashboard
+	* Integrated frontend with backend APIs
+	* Ensured usability, responsiveness, and UX consistency
+
+* **lshein - Developer**
+	* Optimized retrieval accuracy and response quality
+	* Defined overall system architecture
+	* Implemented core backend logic and permission model
+	* Managed Dockerization and environment configuration
+
+
+
+**Challenges Addressed:**
+
+* Secure AI retrieval per team
+* Scaling document embeddings
+* Coordinating multi-service Docker setup
+* Maintaining clean separation of concerns
 
 ---
 
-## Usage Examples
+## Resources
 
-**Sending a chat message:**
+### Technical References
 
-```bash
-POST /api/chat/sendMessage
-{
-  "teamId": "123",
-  "sessionId": "abc",
-  "message": "Explain the key points of the uploaded PDF."
-}
+* Next.js Documentation
+* Supabase Documentation
+* Drizzle ORM Docs
+* Pinecone Vector Database Docs
+* Ollama Documentation
+* Docker & Docker Compose Documentation
+
+### Docker Installation
+
+* [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)
+
+### AI Usage
+
+AI was used to:
+
+* Generate contextual answers from team documents
+* Perform semantic search using vector embeddings
+* Enhance user productivity through natural language interaction
+
+---
+
+## License
+
+MIT License - open source.
+This project is developed for educational purposes as part of the 42 curriculum.
+
 ```
-
-**Admin file upload:**
-
-* Navigate to `/admin/team/[teamId]/files` → Upload PDF → Automatically indexed in AI pipeline.
-
----
