@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUser } from "@/app/providers/UserProvider";
-import HeaderCard from "@/components/dashboard-header-card"
+import HeaderCard from "@/components/dashboard-header-card";
 import { Spinner } from "@/components/ui/spinner";
 import { is } from "drizzle-orm";
 
@@ -294,7 +294,6 @@ export default function ManageUserPage() {
       alert("You must be signed in to reset passwords");
       return;
     }
-    console.log("Initiating password reset for userId:", userId);
     (async () => {
       setIsDoing(true);
       try {
@@ -331,9 +330,9 @@ export default function ManageUserPage() {
 
   return (
     <div>
-      <HeaderCard 
-      title="Manage Users"
-      description="Manage your team members and their account permissions here."
+      <HeaderCard
+        title="Manage Users"
+        description="Manage your team members and their account permissions here."
       />
 
       <div className="mb-4 flex justify-end gap-3">

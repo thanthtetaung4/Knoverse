@@ -8,7 +8,6 @@ export async function POST(request: NextRequest) {
   const accessToken = tokenMatch ? tokenMatch[1] : "";
 
   const { userId } = await request.json();
-  console.log("Resetting password for userId:", userId);
 
   const authResult = await checkAuth(accessToken);
   if (!authResult.success) {
