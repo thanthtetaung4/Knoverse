@@ -1,139 +1,59 @@
-import { NextResponse, NextRequest } from "next/server";
-import { checkAuth } from "@/lib/auth/checkAuth";
-import { chatSessions, analyticsEvents, UserDB } from "@/db/schema";
-import { db } from "@/db";
+import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { getUser } from "@/lib/supabase/getUser";
+import { z } from "zod";
+import { db } from "@/db";
+import { analyticsEvents, chatSessions } from "@/db/schema";
+import { callAiService } from "@/lib/aiService";
+import { HttpError, jsonError, parseJson, withAuth } from "@/lib/api/handler";
+import { canAccessTeam } from "@/lib/teams";
 
-export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-  const { message, sessionId, teamId } = await request.json();
-  let newSessionId = sessionId;
+const bodySchema = z.object({
+  message: z.string().trim().min(1).max(4000),
+  sessionId: z.uuid().nullish(),
+  teamId: z.uuid(),
+});
 
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
+export const POST = withAuth(async (request, { user }) => {
+  const { message, sessionId, teamId } = await parseJson(request, bodySchema);
+
+  // Only members of the team (or admins) may query its documents.
+  if (!(await canAccessTeam(user, teamId))) {
+    return jsonError("You are not a member of this team", 403);
   }
 
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  const user: UserDB | null = await getUser(authResult.user);
-  if (!user) {
-    return NextResponse.json(
-      { error: "User not found in database" },
-      { status: 404 }
-    );
-  }
-
-  if (!message || !teamId) {
-    return NextResponse.json(
-      { error: "Missing message or teamId" },
-      { status: 400 }
-    );
-  }
-
-  if (!sessionId) {
-    try {
-      // Cast the insert result to an array with objects that contain id so TypeScript recognizes it.
-      const inserted = await db
-        .insert(chatSessions)
-        .values({
-          userId: user.id,
-          teamId: teamId,
-          lastUpdated: new Date(),
-        })
-        .returning({ insertedId: chatSessions.id });
-      newSessionId = inserted[0].insertedId;
-    } catch (error: unknown) {
-      return NextResponse.json(
-        { error: "Error creating new chat session" + error },
-        { status: 500 }
-      );
-    }
-  }
-  let userId;
-  try {
-    userId = await db
-      .select({ userId: chatSessions.userId })
+  let chatSessionId = sessionId;
+  if (chatSessionId) {
+    const [session] = await db
+      .select({ userId: chatSessions.userId, teamId: chatSessions.teamId })
       .from(chatSessions)
-      .where(eq(chatSessions.id, newSessionId));
-  } catch (error: unknown) {
-    void error;
-    return NextResponse.json(
-      { error: "Error fetching chat session" },
-      { status: 500 }
-    );
-  }
-
-  if (!userId) {
-    return NextResponse.json({ error: "Wrong sessionId" }, { status: 400 });
-  }
-
-  if (userId[0]?.userId !== user.id) {
-    return NextResponse.json(
-      { error: "Unauthorized access to this chat session" },
-      { status: 403 }
-    );
+      .where(eq(chatSessions.id, chatSessionId));
+    if (!session) throw new HttpError(404, "Chat session not found");
+    if (session.userId !== user.id || session.teamId !== teamId) {
+      return jsonError("Unauthorized access to this chat session", 403);
+    }
+  } else {
+    const [inserted] = await db
+      .insert(chatSessions)
+      .values({ userId: user.id, teamId, lastUpdated: new Date() })
+      .returning({ id: chatSessions.id });
+    chatSessionId = inserted.id;
   }
 
   try {
-    const pythonServerBase = process.env.PY_SERVER_URL ?? "";
-    if (!pythonServerBase) {
-      console.error("PY_SERVER_URL is not set in environment");
-      return NextResponse.json(
-        { error: "Backend misconfiguration: PY_SERVER_URL not set" },
-        { status: 500 }
-      );
-    }
-    const pythonEndpoint = `${pythonServerBase.replace(/\/$/, "")}/chat`;
-    const pythonResp = await fetch(pythonEndpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, sessionId: newSessionId, teamId }),
-    });
-    if (!pythonResp.ok) {
-      const respText = await pythonResp.text().catch(() => "<failed to read body>");
-      console.error("Python server returned non-OK:", pythonResp.status, respText);
-      return NextResponse.json(
-        { error: "Python server returned non-OK response", status: pythonResp.status, body: respText },
-        { status: 502 }
-      );
-    }
-  } catch (error: unknown) {
-    const errMsg = error instanceof Error ? error.stack ?? error.message : String(error);
-    console.error("Error sending message to Python server:", errMsg);
-    return NextResponse.json(
-      { error: "Error sending message to Python server", details: errMsg },
-      { status: 500 }
-    );
+    await callAiService("/chat", "POST", { message, sessionId: chatSessionId, teamId });
+  } catch (error) {
+    console.error("AI chat call failed:", error);
+    return jsonError("The AI service could not answer right now", 502);
   }
 
-  try {
-    await db.insert(analyticsEvents).values({
-      userId: user.id,
-      teamId: teamId,
-    });
-  } catch (error: unknown) {
-    void error;
-  }
-
-    try {
-    await db.update(chatSessions).set({
-      lastUpdated: new Date(),
-    }).where(eq(chatSessions.id, newSessionId));
-  } catch (error: unknown) {
-    void error;
-  }
+  // Analytics and the session timestamp are best-effort; the answer is already saved.
+  await Promise.allSettled([
+    db.insert(analyticsEvents).values({ userId: user.id, teamId }),
+    db.update(chatSessions).set({ lastUpdated: new Date() }).where(eq(chatSessions.id, chatSessionId)),
+  ]);
 
   return NextResponse.json({
     message: "Message sent to Python server successfully",
-    sessionId: newSessionId,
+    sessionId: chatSessionId,
   });
-}
+});

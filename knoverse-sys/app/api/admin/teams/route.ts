@@ -1,177 +1,52 @@
-import { NextRequest, NextResponse } from "next/server";
-import { checkAuth } from "@/lib/auth/checkAuth";
-import { objects, teamFiles, teams } from "@/db/schema";
-import { db } from "@/db";
+import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import checkUserRole from "@/lib/checkUserRole";
+import { z } from "zod";
+import { db } from "@/db";
+import { teams } from "@/db/schema";
+import { HttpError, parseJson, withAuth } from "@/lib/api/handler";
+import { deleteAllTeamFiles } from "@/lib/files";
 
-async function deleteTeamFiles(teamId: string, accessToken: string, baseUrl: string) {
-  const files = await db
-    .select({ objectId: teamFiles.objectId, name: objects.name })
-    .from(teamFiles)
-    .innerJoin(objects, eq(objects.id, teamFiles.objectId))
-    .where(eq(teamFiles.teamId, teamId));
+const createSchema = z.object({
+  teamName: z.string().trim().min(1).max(100),
+  description: z.string().trim().min(1).max(1000),
+});
 
-  if (files.length === 0) return;
+const deleteSchema = z.object({ teamId: z.uuid() });
 
-  console.log(
-    "Deleting files for team:",
-    teamId,
-    "Count:",
-    files.length,
-    "Files:",
-    files
-  );
+export const POST = withAuth(
+  async (request) => {
+    const { teamName, description } = await parseJson(request, createSchema);
 
-  for (const file of files) {
-    try {
-      const deleteEndpoint = new URL("/api/admin/files/deleteFile", baseUrl).toString();
-      const response = await fetch(deleteEndpoint, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          fileId: file.objectId,
-          filePath: file.name,
-        }),
-      });
+    const existing = await db.select({ id: teams.id }).from(teams).where(eq(teams.name, teamName)).limit(1);
+    if (existing.length > 0) throw new HttpError(409, "A team with this name already exists");
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        console.error(`Failed to delete file ${file.objectId}:`, text);
-        throw new Error(`Failed to delete file ${file.objectId}`);
-      }
+    const [team] = await db.insert(teams).values({ name: teamName, description }).returning();
+    return NextResponse.json({ message: "Team created successfully", team });
+  },
+  { admin: true }
+);
 
-      console.log("Successfully deleted file:", file.objectId);
-    } catch (error) {
-      console.error("Error deleting file:", error);
-      throw error;
-    }
-  }
-}
+export const DELETE = withAuth(
+  async (request) => {
+    const { teamId } = await parseJson(request, deleteSchema);
 
-export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-  const { teamName, description } = await request.json();
+    // Remove every file (vectors, storage object, row) first. If any file fails,
+    // the team is kept so the delete can be retried without orphaning data.
+    await deleteAllTeamFiles(teamId);
 
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
+    // Members, chat sessions/messages and analytics rows cascade from teams.
+    const deleted = await db.delete(teams).where(eq(teams.id, teamId)).returning({ id: teams.id });
+    if (deleted.length === 0) throw new HttpError(404, "Team not found");
 
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
-
-  if (!description || !teamName) {
-    return NextResponse.json(
-      { error: "Missing team description or teamName" },
-      { status: 400 }
-    );
-  }
-
-  try {
-    const result = await db.insert(teams).values({
-      name: teamName,
-      description: description,
-    });
-    if (result.count === 0) {
-      return NextResponse.json(
-        { error: "No team found to update" },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json({ message: "Team updated successfully" });
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { error: "Team update failed", details: error },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-  const { teamId } = await request.json();
-
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
-
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
-
-  if (!teamId) {
-    return NextResponse.json({ error: "Missing teamId" }, { status: 400 });
-  }
-
-  try {
-    const baseUrl = request.nextUrl.origin;
-    await deleteTeamFiles(teamId, accessToken, baseUrl);
-
-    console.log("Attempting to delete team with ID:", teamId);
-    const result = await db
-      .delete(teams)
-      .where(eq(teams.id, teamId))
-      .returning();
-    console.log("Delete result:", result);
     return NextResponse.json({ message: "Team deleted successfully" });
-  } catch (error: unknown) {
-    console.error("Error deleting team:", error);
-    return NextResponse.json(
-      { error: "Team deletion failed", details: error },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { admin: true }
+);
 
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
-
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  try {
+export const GET = withAuth(
+  async () => {
     const teamsList = await db.select().from(teams);
     return NextResponse.json({ teams: teamsList });
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { error: "Failed to fetch teams", details: error },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { admin: true }
+);

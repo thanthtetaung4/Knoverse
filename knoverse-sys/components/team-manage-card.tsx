@@ -32,11 +32,11 @@ export default function TeamManageCard({
     router.push(`/admin/manage-teams/${teamId}`);
   };
 
-  const handleDeleteUser = (teamId: string) => {
-    // Implement user deletion logic here
+  const handleDeleteUser = async (teamId: string) => {
     setIsDeleting(true);
     try {
-      const res = fetch("/api/admin/teams", {
+      // Wait for the delete: it removes every team file first, which takes a while.
+      const res = await fetch("/api/admin/teams", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -44,11 +44,18 @@ export default function TeamManageCard({
         },
         body: JSON.stringify({ teamId: teamId }),
       });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        alert(json.error || "Failed to delete team");
+        return;
+      }
+      setTeamDeleted(true);
     } catch (error) {
-      console.error("Error deleting user:", error);
+      console.error("Error deleting team:", error);
+      alert("Failed to delete team");
+    } finally {
+      setIsDeleting(false);
     }
-    setTeamDeleted(true);
-    setIsDeleting(false);
   };
   return (
     <Card>

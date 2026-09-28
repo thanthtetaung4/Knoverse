@@ -1,43 +1,13 @@
-import { NextResponse, NextRequest } from "next/server";
-import { checkAuth } from "@/lib/auth/checkAuth";
+import { NextResponse } from "next/server";
+import { count } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { count } from "drizzle-orm";
-import checkUserRole from "@/lib/checkUserRole";
+import { withAuth } from "@/lib/api/handler";
 
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
-
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
-  try {
-    const result = await db
-      .select({
-        totalUsers: count(users.id),
-      })
-      .from(users);
-
-    return NextResponse.json({ numberOfUsers: result[0].totalUsers });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to retrieve user count", details: error },
-      { status: 500 }
-    );
-  }
-}
+export const GET = withAuth(
+  async () => {
+    const [result] = await db.select({ totalUsers: count(users.id) }).from(users);
+    return NextResponse.json({ numberOfUsers: result.totalUsers });
+  },
+  { admin: true }
+);
