@@ -1,227 +1,81 @@
-import { checkAuth } from "@/lib/auth/checkAuth";
-import { NextRequest, NextResponse } from "next/server";
-import checkUserRole from "@/lib/checkUserRole";
-import { users } from "@/db/schema";
-import { db } from "@/db";
+import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { db } from "@/db";
+import { users } from "@/db/schema";
+import { HttpError, jsonError, parseJson, withAuth } from "@/lib/api/handler";
+import { generatePassword } from "@/lib/password";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function GET(request: NextRequest) {
-  // Check authentication and get the Supabase user
-  const authHeader = request.headers.get("Authorization") || "";
-  const tokenMatch = authHeader.match(/^Bearer (.+)$/);
-  const accessToken = tokenMatch ? tokenMatch[1] : "";
+const userColumns = {
+  id: users.id,
+  email: users.email,
+  role: users.role,
+  fullName: users.fullName,
+  createdAt: users.createdAt,
+};
 
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return new Response(JSON.stringify({ error: authResult.error }), {
-      status: 401,
-    });
-  }
+const createSchema = z.object({
+  userName: z.string().trim().min(1).max(100),
+  userRole: z.enum(["admin", "manager", "member"]),
+  email: z.email(),
+});
 
-  // Only admins can list users
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
+const deleteSchema = z.object({ userId: z.uuid() });
 
-  // Fetch all users from the database
-  try {
-    const allUsers = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        role: users.role,
-        fullName: users.fullName,
-        createdAt: users.createdAt,
-      })
-      .from(users);
-
+export const GET = withAuth(
+  async () => {
+    const allUsers = await db.select(userColumns).from(users);
     return NextResponse.json({ users: allUsers });
-  } catch (err) {
-    console.error("Error fetching users list", err);
-    return NextResponse.json(
-      { error: "Failed to fetch users", details: err },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { admin: true }
+);
 
-export async function POST(request: NextRequest) {
-  const { userName, userRole, email } = await request.json();
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
+export const POST = withAuth(
+  async (request) => {
+    const { userName, userRole, email } = await parseJson(request, createSchema);
+    const password = generatePassword();
 
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
-
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
-
-  if (!userName || !userRole) {
-    return NextResponse.json(
-      { error: "Missing team description or teamName" },
-      { status: 400 }
-    );
-  }
-
-  if (userRole != "admin" && userRole != "manager" && userRole != "member") {
-    return NextResponse.json({ error: "invalid user type" }, { status: 400 });
-  }
-
-  try {
-    let authUser;
-    let password: string | undefined = undefined;
-    try {
-      password = Math.random().toString(36).slice(-8);
-      const supabase = await createClient();
-      authUser = await supabase.auth.signUp({
-        email: email,
-        password: password,
-      });
-      if (!authUser.data.user) {
-        return NextResponse.json(
-          { error: "User Creation Failed" },
-          { status: 500 }
-        );
-      }
-    } catch (error) {
-      console.error("Error creating user in Supabase:", error);
-      return NextResponse.json(
-        { error: "User Creation Failed", details: error },
-        { status: 500 }
-      );
+    // Admin API: creates the account without touching the calling admin's session.
+    // The `users` row is created by the auth.users trigger; we then fill in name/role.
+    const { data, error } = await createAdminClient().auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (error || !data.user) {
+      console.error("Supabase createUser failed:", error);
+      throw new HttpError(error?.status === 422 ? 409 : 500, error?.message ?? "User Creation Failed");
     }
 
-    const userId = authUser.data.user.id;
-    const role: "admin" | "manager" | "member" = userRole as
-      | "admin"
-      | "manager"
-      | "member";
+    const userId = data.user.id;
+    const result = await db.update(users).set({ fullName: userName, role: userRole }).where(eq(users.id, userId));
+    if (result.count === 0) return jsonError("Error updating user", 404);
 
-    try {
-      const result = await db
-        .update(users)
-        .set({ fullName: userName, role: role })
-        .where(eq(users.id, userId));
+    const [createdUser] = await db.select(userColumns).from(users).where(eq(users.id, userId));
 
-      if (result.count === 0) {
-        return NextResponse.json(
-          { error: "Error updating user" },
-          { status: 404 }
-        );
-      }
+    return NextResponse.json({
+      message: `User created successfully with email: ${email}`,
+      user: createdUser ?? null,
+      email,
+      password,
+    });
+  },
+  { admin: true }
+);
 
-      // Fetch the created/updated user row to return to client
-      const createdRows = await db
-        .select({
-          id: users.id,
-          email: users.email,
-          fullName: users.fullName,
-          role: users.role,
-          createdAt: users.createdAt,
-        })
-        .from(users)
-        .where(eq(users.id, userId));
+export const DELETE = withAuth(
+  async (request, { user }) => {
+    const { userId } = await parseJson(request, deleteSchema);
+    if (userId === user.id) throw new HttpError(400, "You cannot delete your own account");
 
-      const createdUser = createdRows[0] ?? null;
-
-      return NextResponse.json({
-        message: `User created successfully with email: ${email}`,
-        user: createdUser,
-        email,
-        password,
-      });
-    } catch (error) {
-      console.error("Error updating user in database:", error);
-      return NextResponse.json(
-        { error: "Database update failed", details: error },
-        { status: 500 }
-      );
+    // Deleting the auth user cascades to the `users` row.
+    const { error } = await createAdminClient().auth.admin.deleteUser(userId);
+    if (error) {
+      console.error("Supabase admin.deleteUser returned error:", error);
+      throw new HttpError(500, "Error deleting user in Supabase");
     }
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { error: "User update failed", details: error },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-  const { userId } = await request.json();
-
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
-
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
-
-  if (!userId) {
-    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
-  }
-
-  // First attempt to delete the auth user in Supabase using the service role key
-  try {
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!serviceRoleKey) {
-      console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
-      return NextResponse.json(
-        { error: "Server misconfiguration: missing service role key" },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      serviceRoleKey
-    );
-
-    const deleteRes = await supabase.auth.admin.deleteUser(userId);
-
-    if (deleteRes.error) {
-      // If Supabase returns an error, do not proceed to remove DB row
-      console.error(
-        "Supabase admin.deleteUser returned error:",
-        deleteRes.error
-      );
-      return NextResponse.json(
-        { error: "Error deleting user in Supabase", details: deleteRes.error },
-        { status: 500 }
-      );
-    }
-  } catch (err) {
-    console.error("Exception while calling Supabase admin.deleteUser:", err);
-    return NextResponse.json(
-      { error: "Supabase deletion failed", details: err },
-      { status: 500 }
-    );
-  }
-  return NextResponse.json({ message: `User deleted successfully` });
-}
+    return NextResponse.json({ message: "User deleted successfully" });
+  },
+  { admin: true }
+);

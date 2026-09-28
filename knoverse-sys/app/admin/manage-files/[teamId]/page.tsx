@@ -17,6 +17,13 @@ import { useUser } from "@/app/providers/UserProvider";
 import { useParams } from "next/navigation";
 import HeaderCard from "@/components/dashboard-header-card";
 
+// New uploads are stored as `<teamId>/<uuid>/<name>`; older ones as `<name>-<teamId prefix>`.
+function displayFileName(path: string | null) {
+  if (!path) return "";
+  if (path.includes("/")) return path.split("/").pop() ?? path;
+  return path.replace(/-[0-9a-f]{8}$/i, "");
+}
+
 type FileRow = {
   id: string; // team_files.id
   objectId: string; // storage object id
@@ -162,8 +169,8 @@ export default function ManageUserPage() {
         body: form,
       });
       if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        setUploadError(txt || "Upload failed");
+        const json = await res.json().catch(() => ({}));
+        setUploadError(json.error || "Upload failed");
       } else {
         await fetchFiles();
       }
@@ -182,7 +189,7 @@ export default function ManageUserPage() {
 
         <div className="mb-4 flex justify-between items-center gap-3">
           <form onSubmit={handleUpload} className="flex items-center gap-2">
-            <input type="file" name="fileUpload" />
+            <input type="file" name="fileUpload" accept="application/pdf,.pdf" />
             <Button type="submit" disabled={isUploading}>
               {isUploading ? "Uploading..." : "Upload File"}
             </Button>
@@ -237,7 +244,7 @@ export default function ManageUserPage() {
                         onCheckedChange={() => handleSelect(r.id)}
                       />
                     </td>
-                    <td className="p-4 font-medium">{r.fileName?.slice(0, r.fileName.length - 9)}</td>
+                    <td className="p-4 font-medium">{displayFileName(r.fileName)}</td>
                     <td className="p-4 font-mono text-sm">{r.objectId}</td>
                     <td className="p-4 text-right">
                       {r.createdAt ? new Date(r.createdAt).toLocaleString() : ""}

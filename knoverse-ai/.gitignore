@@ -214,3 +214,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Uploaded documents never belong in git
+*.pdf
+*.pdf-*

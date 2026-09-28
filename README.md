@@ -102,28 +102,17 @@ No local Node.js or Python installation is required for execution.
 
 ### Environment Configuration
 
-This project requires **three environment files**:
+Copy the examples and fill them in:
 
-#### 1. `knoverse-sys/.env`
-```env
-SUPABASE_URL=...
-SUPABASE_SERVICE_KEY=...
+```bash
+cp knoverse-sys/.env.example knoverse-sys/.env
+touch knoverse-sys/.env.local        # optional local overrides (docker compose expects the file)
+cp knoverse-ai/.env.example knoverse-ai/.env
 ```
 
-#### 2. `knoverse-sys/.env.local`
+`AI_SERVICE_TOKEN` must be the **same value in both files**. The AI service rejects any request without it. Generate one with `openssl rand -hex 32`.
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-```
-
-#### 3. `knoverse-ai/.env`
-
-```env
-PINECONE_API_KEY=...
-PINECONE_ENVIRONMENT=...
-OLLAMA_BASE_URL=...
-```
+The server uses `SUPABASE_SERVICE_ROLE_KEY` for storage and user administration, so the `files` bucket does not need any anon insert or delete policies.
 
 ---
 

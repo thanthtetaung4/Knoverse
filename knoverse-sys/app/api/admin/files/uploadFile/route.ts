@@ -1,124 +1,27 @@
-import { checkAuth } from "@/lib/auth/checkAuth";
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { db } from "@/db";
-import { teamFiles } from "@/db/schema";
-import checkUserRole from "@/lib/checkUserRole";
-
-async function supabaseUploadFile(teamId: string, file: File) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY!;
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const { data, error } = await supabase.storage
-    .from("files")
-    .upload(file.name, file);
-  // use this to create team file data?.id;
-  if (error) {
-    throw error;
-  }
-  const result = await db
-    .insert(teamFiles)
-    .values({ teamId: teamId, objectId: data.id });
-  if (!result) {
-    throw new Error("Failed to insert team file record");
-  }
-  return data;
-}
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { HttpError, withAuth } from "@/lib/api/handler";
+import { uploadTeamFile } from "@/lib/files";
+import { teamExists } from "@/lib/teams";
 
 /*
- * this route upload the file to the supabase storage
- * and call the python server to vectorize the file
- *
+ * Upload a PDF to Supabase storage for a team and have the AI service index it.
  */
-export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-  const formData = await request.formData();
-  const file = formData.get("fileUpload") as File | null;
-  const teamId = formData.get("teamId") as string | null;
-
-
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
-
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  if (!file) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  }
-
-  const newFile = new File(
-    [file],
-    `${file.name}-${teamId?.slice(0,8)}`,
-    { type: file.type }
-  );
-
-  if (!teamId) {
-    return NextResponse.json({ error: "No teamId provided" }, { status: 400 });
-  }
-
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
-
-  let filePath = "";
-  let fileId = "";
-  // Upload file to Supabase Storage
-  try {
-    const uploadResponse = await supabaseUploadFile(teamId, newFile);
-    filePath = uploadResponse.path;
-    fileId = uploadResponse.id;
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { error: "File upload failed", details: error },
-      { status: 500 }
-    );
-  }
-
-  try {
-    // Call Python server to vectorize the file
-    const pythonServerBase =
-      process.env.PY_SERVER_URL ?? "http://localhost:8000";
-    const pythonEndpoint = `${pythonServerBase.replace(/\/$/, "")}/uploadFile`;
-
-    const pythonResp = await fetch(pythonEndpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fileName: filePath,
-        teamId: teamId,
-        fileId: fileId,
-      }),
+export const POST = withAuth(
+  async (request) => {
+    const formData = await request.formData().catch(() => {
+      throw new HttpError(400, "Expected multipart form data");
     });
+    const file = formData.get("fileUpload");
+    const teamId = z.uuid().safeParse(formData.get("teamId"));
 
-    if (!pythonResp.ok) {
-      const txt = await pythonResp.text().catch(() => "");
-      return NextResponse.json(
-        { error: "Python server error", details: txt },
-        { status: 500 }
-      );
-    }
+    if (!(file instanceof File)) throw new HttpError(400, "No file provided");
+    if (!teamId.success) throw new HttpError(400, "A valid teamId is required");
+    if (!(await teamExists(teamId.data))) throw new HttpError(404, "Team not found");
 
-    const pythonJson = await pythonResp.json().catch(() => ({}));
-  } catch (error: unknown) {
-    console.error("Error calling python server:", error);
-    return NextResponse.json(
-      { error: "Failed to call python server", details: String(error) },
-      { status: 500 }
-    );
-  }
+    const { path } = await uploadTeamFile(teamId.data, file);
 
-  return NextResponse.json({
-    message: `File ${filePath} uploaded successfully`,
-  });
-}
+    return NextResponse.json({ message: `File ${path} uploaded successfully` });
+  },
+  { admin: true }
+);

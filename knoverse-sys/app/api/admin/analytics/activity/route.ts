@@ -1,37 +1,14 @@
-import { checkAuth } from "@/lib/auth/checkAuth";
-import { NextRequest, NextResponse } from "next/server";
-import { analyticsEvents, teams } from "@/db/schema";
-import { db } from "@/db";
-import checkUserRole from "@/lib/checkUserRole";
+import { NextResponse } from "next/server";
 import { count, desc, eq } from "drizzle-orm";
+import { db } from "@/db";
+import { analyticsEvents, teams } from "@/db/schema";
+import { withAuth } from "@/lib/api/handler";
 
 /*
  * Return the analytics activity data for admin dashboard
- *
  */
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
-
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
-
-  try {
+export const GET = withAuth(
+  async () => {
     // Get top 5 teams by number of analytics events with team names
     const topTeams = await db
       .select({
@@ -46,11 +23,6 @@ export async function GET(request: NextRequest) {
       .limit(5);
 
     return NextResponse.json({ topTeams });
-  } catch (error) {
-    console.error("Error fetching activity data:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch activity data", details: String(error) },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { admin: true }
+);

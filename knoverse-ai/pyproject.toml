@@ -10,16 +10,30 @@ dependencies = [
     "python-dotenv==1.2.1",
     "requests==2.32.5",
     "supabase==2.27.0",
-    "langchain==1.2.0",
     "langchain-community==0.4.1",
     "langchain-core==1.2.5",
+    "langchain-ollama>=1.0",
     "langchain-pinecone==0.2.13",
     "langchain-text-splitters==1.1.0",
     "pinecone==7.3.0",
     "pypdf==6.5.0",
-    "psycopg2-binary==2.9.11",
-    "numpy==2.4.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
 
 [tool.uv]
 # Keep transitive dependencies at the versions from the old requirements.txt (pre-FastAPI).

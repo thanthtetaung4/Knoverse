@@ -1,60 +1,24 @@
+import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/db";
-import { teams, teamMembers } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
-import { checkAuth } from "@/lib/auth/checkAuth";
-import { NextRequest, NextResponse } from "next/server";
+import { teamMembers, teams } from "@/db/schema";
+import { jsonError, parseQuery, withAuth } from "@/lib/api/handler";
 
-export async function GET(request: NextRequest) {
-  // Check authentication and get the Supabase user
-  const authHeader = request.headers.get("Authorization") || "";
-  const tokenMatch = authHeader.match(/^Bearer (.+)$/);
-  const accessToken = tokenMatch ? tokenMatch[1] : "";
-  const params = request.nextUrl.searchParams;
-  const userId = params.get("userId");
+const querySchema = z.object({ userId: z.uuid() });
 
-  if (!userId) {
-    return new Response(
-      JSON.stringify({ error: "Missing userId query parameter" }),
-      { status: 400 }
-    );
+/** Teams a user belongs to. Users may look up themselves; admins anyone. */
+export const GET = withAuth(async (request, { user }) => {
+  const { userId } = parseQuery(request, querySchema);
+  if (userId !== user.id && user.role !== "admin") {
+    return jsonError("Forbidden", 403);
   }
 
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return new Response(JSON.stringify({ error: authResult.error }), {
-      status: 401,
-    });
-  }
+  const rows = await db
+    .select({ team: teams })
+    .from(teamMembers)
+    .innerJoin(teams, eq(teams.id, teamMembers.teamId))
+    .where(eq(teamMembers.userId, userId));
 
-  if (!authResult.user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-    });
-  }
-
-  try {
-    // get teamIds the user belongs to
-    const teamIdRows = await db
-      .select({ teamId: teamMembers.teamId })
-      .from(teamMembers)
-      .where(eq(teamMembers.userId, userId));
-    const teamIds = teamIdRows.map((r) => r.teamId);
-
-    if (teamIds.length === 0) {
-      return NextResponse.json({ teams: [] });
-    }
-
-    // fetch full team details from `teams` table
-    const teamsResponse = await db
-      .select()
-      .from(teams)
-      .where(inArray(teams.id, teamIds));
-
-    return NextResponse.json({ teams: teamsResponse });
-  } catch (error) {
-    console.error("Error fetching teams:", error);
-    return new Response(JSON.stringify({ error: "Server error" }), {
-      status: 500,
-    });
-  }
-}
+  return NextResponse.json({ teams: rows.map((r) => r.team) });
+});

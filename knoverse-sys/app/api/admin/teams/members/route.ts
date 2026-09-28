@@ -1,146 +1,57 @@
-import { NextResponse, NextRequest } from "next/server";
-import { checkAuth } from "@/lib/auth/checkAuth";
-import checkUserRole from "@/lib/checkUserRole";
-import { teamMembers } from "@/supabase/migrations/schema";
-import { eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import { and, eq } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/db";
+import { teamMembers } from "@/db/schema";
+import { HttpError, jsonError, parseJson, parseQuery, withAuth } from "@/lib/api/handler";
 
-export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-  const { teamId, memberId } = await request.json();
+const memberSchema = z.object({ teamId: z.uuid(), memberId: z.uuid() });
+const querySchema = z.object({ userId: z.uuid() });
 
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
+export const POST = withAuth(
+  async (request) => {
+    const { teamId, memberId } = await parseJson(request, memberSchema);
 
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
+    const inserted = await db
+      .insert(teamMembers)
+      .values({ teamId, userId: memberId })
+      .onConflictDoNothing()
+      .returning();
 
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
-
-  //if user is admin add the team member to the teamid
-  if (!teamId || !memberId) {
-    return NextResponse.json(
-      { error: "Missing teamId or memberId" },
-      { status: 400 }
-    );
-  }
-
-  let res;
-  try {
-    res = await db.insert(teamMembers).values({
-      teamId: teamId,
-      userId: memberId,
+    return NextResponse.json({
+      message: inserted.length ? "Member added to team successfully" : "User is already a member of this team",
+      data: inserted,
     });
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { error: "Error adding member to team", details: error },
-      { status: 500 }
-    );
+  },
+  { admin: true }
+);
+
+/** Teams a user belongs to. Users may look up themselves; admins anyone. */
+export const GET = withAuth(async (request, { user }) => {
+  const { userId } = parseQuery(request, querySchema);
+  if (userId !== user.id && user.role !== "admin") {
+    return jsonError("Forbidden", 403);
   }
 
-  return NextResponse.json({
-    message: "Member added to team successfully",
-    data: res,
-  });
-}
-
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("userId");
-
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
-
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  if (!userId) {
-    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
-  }
-
-  let team;
-  try {
-    team = await db
-      .select({ id: teamMembers.teamId })
-      .from(teamMembers)
-      .where(eq(teamMembers.userId, userId));
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { error: "Error fetching team members", details: error },
-      { status: 500 }
-    );
-  }
+  const team = await db
+    .select({ id: teamMembers.teamId })
+    .from(teamMembers)
+    .where(eq(teamMembers.userId, userId));
 
   return NextResponse.json({ teamId: team });
-}
+});
 
-export async function DELETE(request: NextRequest) {
-  const authHeader = request.headers.get("Authorization");
-  const accessToken = authHeader?.replace("Bearer ", "");
-  const { teamId, memberId } = await request.json();
+export const DELETE = withAuth(
+  async (request) => {
+    const { teamId, memberId } = await parseJson(request, memberSchema);
 
-  if (!accessToken) {
-    return NextResponse.json(
-      { error: "Missing Authorization header" },
-      { status: 401 }
-    );
-  }
-
-  // Check authentication
-  const authResult = await checkAuth(accessToken);
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: 401 });
-  }
-
-  const isAdmin: boolean = await checkUserRole(authResult.user);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Not Allowed" }, { status: 405 });
-  }
-
-  if (!teamId || !memberId) {
-    return NextResponse.json(
-      { error: "Missing teamId or memberId" },
-      { status: 400 }
-    );
-  }
-
-  try {
-    const result = await db
+    const deleted = await db
       .delete(teamMembers)
-      .where(
-        eq(teamMembers.teamId, teamId) && eq(teamMembers.userId, memberId)
-      );
-    if (result.count === 0) {
-      return NextResponse.json(
-        { error: "No team member found to delete" },
-        { status: 404 }
-      );
-    }
+      .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, memberId)))
+      .returning();
+    if (deleted.length === 0) throw new HttpError(404, "No team member found to delete");
+
     return NextResponse.json({ message: "Team member deleted successfully" });
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { error: "Team member deletion failed", details: error },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { admin: true }
+);
