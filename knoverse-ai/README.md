@@ -41,8 +41,16 @@ ollama serve
 
 ### 1. Install Dependencies
 
+Dependencies are managed with [uv](https://docs.astral.sh/uv/) (`pyproject.toml` + `uv.lock`):
+
 ```bash
-pip install -r requirements.txt
+uv sync
+```
+
+Run the API server (FastAPI on port 8000):
+
+```bash
+uv run uvicorn app:app --reload --port 8000
 ```
 
 ### 2. Configure Environment Variables
@@ -162,7 +170,8 @@ knoverse-ai/
 ├── main.py                              # Main pipeline script
 ├── pdf/
 │   └── sample-terms-conditions-agreement.pdf
-├── requirements.txt                     # Python dependencies
+├── pyproject.toml                       # Python dependencies (uv)
+├── uv.lock                              # Locked dependency versions
 ├── .env                                 # Environment variables (local)
 ├── .env.example                         # Template for .env
 └── README.md                            # This file

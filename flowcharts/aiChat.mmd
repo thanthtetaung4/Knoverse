@@ -15,7 +15,7 @@ flowchart TD
     D -->|Yes| E[Insert USER message<br/>messages table]
 
     %% AI Processing
-    E --> F["Call AI Backend<br/>(Flask)"]
+    E --> F["Call AI Backend<br/>(FastAPI)"]
     F --> G[Embed user query]
     G --> H[Query Pinecone<br/>filter: org_id + team_id]
     H --> I[Retrieve relevant chunks]
