@@ -3,27 +3,47 @@ services:
     build: ./knoverse-sys
     ports:
       - "3000:3000"
+    restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     env_file:
       - ./knoverse-sys/.env
       - ./knoverse-sys/.env.local
+    environment:
+      PY_SERVER_URL: http://api:8000
 
+  # Internal only: reachable by the frontend over the compose network, not published
+  # to the host. It also requires the shared AI_SERVICE_TOKEN on every request.
   api:
     build: ./knoverse-ai
-    ports:
-      - "8000:8000"
+    restart: unless-stopped
     depends_on:
-      - ollama
+      ollama:
+        condition: service_healthy
     env_file:
       - ./knoverse-ai/.env
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
+  # Internal only: models are pulled by the api service on startup.
   ollama:
     image: ollama/ollama
-    ports:
-      - "11434:11434"
+    restart: unless-stopped
     volumes:
       - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   ollama_data:
